@@ -1,0 +1,40 @@
+services:
+  exporter:
+    image: python:3.12-alpine
+    command: [python, -m, harness.metrics, --host, 0.0.0.0, --data, /data]
+    working_dir: /app
+    environment:
+      PYTHONDONTWRITEBYTECODE: "1"
+    volumes:
+      - ../harness:/app/harness:ro
+      - ${HARNESS_DATA_DIR:?Set HARNESS_DATA_DIR to the TUI run directory}:/data:ro
+    read_only: true
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    restart: unless-stopped
+  prometheus:
+    image: ${PROMETHEUS_IMAGE:-prom/prometheus:latest}
+    command: [--config.file=/etc/prometheus/prometheus.yml, --storage.tsdb.retention.time=15d]
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports: ["127.0.0.1:9091:9090"]
+    depends_on: [exporter]
+    restart: unless-stopped
+  grafana:
+    image: ${GRAFANA_IMAGE:-grafana/grafana:latest}
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Set GRAFANA_ADMIN_PASSWORD before starting Grafana}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports: ["127.0.0.1:3001:3000"]
+    depends_on: [prometheus]
+    restart: unless-stopped
+volumes:
+  prometheus-data:
+  grafana-data:

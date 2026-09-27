@@ -1,0 +1,9 @@
+{
+  "models": [
+    {"id": "college-qwen", "provider": "compatible", "api_base": "http://127.0.0.1:8000/v1", "model": "COLLEGE_QWEN_MODEL_ID", "api_key_env": "COLLEGE_API_KEY"},
+    {"id": "college-deepseek", "provider": "compatible", "api_base": "http://127.0.0.1:8000/v1", "model": "COLLEGE_DEEPSEEK_MODEL_ID", "api_key_env": "COLLEGE_API_KEY"}
+  ],
+  "tasks": [
+    {"id": "bug-001", "repo": "/absolute/path/to/clean-repository", "issue": "Replace this with the actual evaluation issue.", "test": ["python3", "-m", "pytest", "-q"]}
+  ]
+}

@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>AI Harness | Debug Workspace</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/lucide.js" defer></script><script src="/app.js" defer></script>
+</head>
+<body>
+<aside class="rail">
+  <a class="brand" href="/" aria-label="AI Harness home"><span class="brand-symbol"><i data-lucide="scan-line"></i></span><span>AI Harness<small>DEBUG WORKSPACE</small></span></a>
+  <nav aria-label="Main navigation">
+    <button class="nav active" data-view="workspace"><i data-lucide="terminal-square"></i><span>Workspace</span></button>
+    <button class="nav" data-view="history"><i data-lucide="history"></i><span>Run history</span><b id="run-count">0</b></button>
+    <button class="nav" data-view="monitoring"><i data-lucide="activity"></i><span>Monitoring</span></button>
+    <button class="nav" data-view="comparison"><i data-lucide="columns-3"></i><span>Comparison</span></button>
+  </nav>
+  <div class="rail-bottom"><span class="connection-dot"></span><span id="connection">Connecting</span><small>LOCAL WORKSPACE</small></div>
+</aside>
+<main>
+  <header class="topbar"><div><span class="breadcrumb">AI Harness</span><span class="slash">/</span><span id="page-label">Workspace</span></div><div class="top-actions"><button id="connect-model" class="text-button" title="Model connection"><i data-lucide="plug"></i><span>Model</span></button><span class="tag">v2 / local</span><button id="refresh" class="icon-button" aria-label="Refresh runs" title="Refresh runs"><i data-lucide="refresh-cw"></i></button></div></header>
+  <div id="notice" role="alert" hidden></div>
+  <section id="workspace" class="view">
+    <div class="page-heading"><div><div class="eyebrow">REPRODUCE. REPAIR. VERIFY.</div><h1>Debug workspace</h1></div><span id="run-status" class="status">Ready</span></div>
+    <div class="stats">
+      <div><span>Tokens <small>estimated</small></span><strong id="stat-tokens">—</strong><small id="stat-budget">12,000 budget</small></div>
+      <div><span>Source context reduction</span><strong id="stat-reduction">—</strong><small>vs. eligible full source</small></div>
+      <div><span>Verification</span><strong id="stat-checks">—</strong><small id="stat-baseline">No run selected</small></div>
+      <div><span>Elapsed time</span><strong id="stat-time">—</strong><small id="stat-attempts">0 model calls</small></div>
+    </div>
+    <div class="workspace-grid">
+      <form id="run-form" class="configuration">
+        <div class="section-label"><i data-lucide="sliders-horizontal"></i><h2>Run configuration</h2></div>
+        <label for="mode">Execution mode</label><select id="mode"><option value="demo">Fixture simulation</option><option value="model">AI model</option></select>
+        <div id="provider-state" class="mode-note"><span class="tag amber">SIMULATION</span><span>Fixed invoice repair · real tests</span></div>
+        <label for="repo">Repository</label><input id="repo" placeholder="/absolute/path/to/repository" disabled><div class="field-hint" id="repo-note">Disposable invoice fixture</div>
+        <label for="test">Verification command <small>JSON argv</small></label><input id="test" value='["python3", "-m", "pytest", "-q"]' disabled spellcheck="false">
+        <label for="issue">Issue</label><textarea id="issue" rows="5" readonly>Fix invoice_total: a percentage discount must reduce the subtotal before tax is applied.</textarea>
+        <div class="field-row"><label for="tokens">Token budget</label><input id="tokens" type="number" value="12000" min="1000" max="200000" step="500"></div>
+        <input id="budget-range" type="range" min="1000" max="30000" step="500" value="12000" aria-label="Token budget slider">
+        <div class="field-row"><label for="attempts">Maximum attempts</label><input id="attempts" type="number" value="5" min="1" max="20"></div>
+        <div class="run-actions"><button id="run-button" class="primary" type="submit"><i data-lucide="play"></i><span>Run fixture</span></button><button id="cancel" type="button" class="icon-button danger" title="Stop active run" aria-label="Stop active run" disabled><i data-lucide="square"></i></button></div>
+        <div class="model-caption" id="model-caption">AI model not configured</div>
+      </form>
+      <section class="results" aria-label="Debug results">
+        <div class="result-header"><div class="section-label"><i data-lucide="git-pull-request"></i><h2 id="result-title">Session</h2></div><span id="run-id" class="mono muted">No active run</span></div>
+        <div class="tabs" role="tablist" aria-label="Run evidence">
+          <button class="tab active" data-tab="conversation" role="tab" aria-selected="true">Conversation</button><button class="tab" data-tab="changes" role="tab" aria-selected="false">Changes<span id="patch-count">0</span></button><button class="tab" data-tab="tests" role="tab" aria-selected="false">Tests</button><button class="tab" data-tab="context" role="tab" aria-selected="false">Context</button>
+        </div>
+        <div id="conversation" class="tab-panel" role="tabpanel"><div class="empty-state"><i data-lucide="scan-search"></i><h3>Ready for a debugging run</h3><p>No model calls or repository changes yet.</p><div class="empty-pipeline"><span>Reproduce</span><i data-lucide="arrow-right"></i><span>Repair</span><i data-lucide="arrow-right"></i><span>Verify</span></div></div></div>
+        <div id="changes" class="tab-panel" role="tabpanel" hidden><div class="panel-toolbar"><span id="patch-label">No patch yet</span><a id="download-patch" class="text-button" hidden download="candidate.patch"><i data-lucide="download"></i>Download patch</a></div><pre id="diff" class="code-block">No source changes.</pre></div>
+        <div id="tests" class="tab-panel" role="tabpanel" hidden><div id="test-results" class="evidence-empty">No test evidence yet.</div></div>
+        <div id="context" class="tab-panel" role="tabpanel" hidden><div class="panel-toolbar"><span>Source selection</span><span class="tag">ESTIMATES</span></div><canvas id="context-chart" width="800" height="170" aria-label="Selected source context compared with full source" role="img"></canvas><div id="context-details" class="evidence-empty">No context selected yet.</div></div>
+        <form id="follow-form" class="follow-up" hidden><label class="sr-only" for="follow-text">Refine the issue</label><textarea id="follow-text" rows="2" placeholder="Add a constraint or refine the issue…" maxlength="6000"></textarea><button class="icon-button primary" type="submit" title="Run with follow-up" aria-label="Run with follow-up"><i data-lucide="arrow-up"></i></button></form>
+        <div class="result-footer"><span><i data-lucide="shield-check"></i>Isolated checkout</span><span id="artifact-links"></span></div>
+      </section>
+    </div>
+  </section>
+  <section id="history" class="view" hidden><div class="page-heading"><div class="eyebrow">LOCAL EVIDENCE</div><h1>Run history</h1></div><div class="table-scroll"><table><thead><tr><th>Run / issue</th><th>Mode</th><th>Outcome</th><th>Est. tokens</th><th>Elapsed</th><th></th></tr></thead><tbody id="history-rows"></tbody></table></div><p id="history-empty" class="muted">No runs yet.</p></section>
+  <section id="monitoring" class="view" hidden><div class="page-heading"><div><div class="eyebrow">OBSERVABILITY</div><h1>Monitoring</h1></div><a class="text-button" href="/metrics" target="_blank" rel="noopener"><i data-lucide="external-link"></i>Metrics endpoint</a></div><div class="monitor-band"><i data-lucide="activity"></i><div><h2>Prometheus metrics</h2><p id="metrics-summary">No recorded runs.</p></div><span class="tag green">AVAILABLE</span></div><pre id="metrics-preview" class="code-block"></pre><div class="monitor-band"><i data-lucide="chart-no-axes-combined"></i><div><h2>Grafana</h2><p>Provisioned dashboard · Docker stack required</p></div><a href="http://localhost:3001/d/harness/ai-harness" target="_blank" rel="noopener" class="text-button"><i data-lucide="external-link"></i>Open Grafana</a></div><p class="muted">Run outcomes, token estimates, reported model usage, context reduction, and latency. Simulation and model runs are separate series.</p></section>
+  <section id="comparison" class="view" hidden><div class="page-heading"><div><div class="eyebrow">CAPABILITIES, NOT A LEADERBOARD CLAIM</div><h1>How it compares</h1></div><span class="tag">27 SEP 2026</span></div><div class="table-scroll"><table class="comparison-table"><thead><tr><th>Capability</th><th>AI Harness v2</th><th>Aider</th><th>mini-SWE-agent</th></tr></thead><tbody>
+    <tr><th>Code context</th><td>Ranked line excerpts; Python symbols</td><td>Graph-ranked repository map</td><td>Model-directed exploration</td></tr><tr><th>Model integration</th><td>Groq; DeepSeek; Qwen endpoints; Ollama; adapter</td><td>Multiple providers</td><td>Multiple providers</td></tr><tr><th>Interaction</th><td>Local workspace; issue follow-ups</td><td>Terminal pair programming</td><td>CLI; interactive agent</td></tr><tr><th>Verification</th><td>Baseline + candidate command</td><td>Lint and test integration</td><td>Commands and benchmark runners</td></tr><tr><th>Execution</th><td>Temporary local checkout</td><td>Local repository</td><td>Local and container environments</td></tr><tr><th>Token control</th><td>Bounded context, feedback, attempts</td><td>Map budget; prompt caching</td><td>Configurable limits and model usage</td></tr><tr><th>Observability here</th><td>Run evidence + Prometheus + Grafana config</td><td colspan="2">Different workflows; no integration tested here</td></tr><tr><th>Comparable solve rate</th><td>Not measured</td><td colspan="2">Requires the same tasks, model, budget, and evaluator</td></tr>
+  </tbody></table></div><div class="sources"><a href="https://aider.chat/docs/repomap.html" target="_blank" rel="noopener">Aider documentation <i data-lucide="external-link"></i></a><a href="https://mini-swe-agent.com/latest/" target="_blank" rel="noopener">mini-SWE-agent documentation <i data-lucide="external-link"></i></a><a href="https://www.swebench.com/" target="_blank" rel="noopener">SWE-bench <i data-lucide="external-link"></i></a></div></section>
+</main>
+<dialog id="connection-dialog" aria-labelledby="connection-title">
+  <form id="connection-form">
+    <div class="dialog-heading"><div><div class="eyebrow">MODEL ACCESS</div><h2 id="connection-title">Connect your model</h2></div><button id="close-connection" type="button" class="icon-button" aria-label="Close model connection" title="Close"><i data-lucide="x"></i></button></div>
+    <label for="provider">Provider</label><select id="provider"><option value="groq">Groq</option><option value="deepseek">DeepSeek</option><option value="qwen">Qwen / Model Studio</option><option value="compatible">College / compatible endpoint</option></select>
+    <label for="api-base">API base URL</label><input id="api-base" type="url" required value="https://api.groq.com/openai/v1" spellcheck="false">
+    <label for="api-key">API key <small>memory only</small></label><input id="api-key" type="password" autocomplete="off" placeholder="Provider API key" maxlength="4096"><p class="field-hint">Not saved to disk. Cleared when the server restarts.</p>
+    <div class="field-row"><label for="model-id">Model ID</label><button id="load-models" class="text-button" type="button"><i data-lucide="refresh-cw"></i>Load models</button></div><input id="model-id" list="model-options" required placeholder="Exact model ID from provider or college" spellcheck="false"><datalist id="model-options"></datalist>
+    <p id="connection-feedback" role="status" class="connection-feedback">API credentials are sent only to the configured endpoint.</p>
+    <div class="dialog-actions"><button id="disconnect-model" type="button" class="secondary">Disconnect</button><button id="save-connection" type="submit" class="primary"><i data-lucide="check"></i>Use this model</button></div>
+  </form>
+</dialog>
+</body></html>

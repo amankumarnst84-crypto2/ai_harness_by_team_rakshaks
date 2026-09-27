@@ -1,0 +1,9 @@
+apiVersion: 1
+providers:
+  - name: AI Harness
+    folder: AI Harness
+    type: file
+    disableDeletion: true
+    editable: false
+    options:
+      path: /var/lib/grafana/dashboards

@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.harness-data/
+.env
+.env.*
+!.env.example
+.venv/
+dist/
+build/
+evidence/*-screenshot.png
