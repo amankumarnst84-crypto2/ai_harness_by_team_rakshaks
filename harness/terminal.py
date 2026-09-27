@@ -160,6 +160,8 @@ class Terminal:
             self.say("\nAI > " + event["plan"], "title")
         elif kind == "edited":
             self.say(stamp + "Edited " + ", ".join(event["files"]))
+        elif kind == "shell":
+            self.say(stamp + f"Shell executed: {event['command']} (Exit: {event['code']})", "warn")
         elif kind == "recovery":
             self.say(stamp + "Focused recovery: " + event["focus_file"] + " (fresh source, minimal edit)", "warn")
         elif kind == "audit_started":

@@ -262,7 +262,7 @@ class RakshakTUI(App):
 
     def consume(self, event):
         kind = event["event"]
-        stage = {"context": 1, "model_started": 2, "edited": 3, "read": 1}
+        stage = {"context": 1, "model_started": 2, "edited": 3, "read": 1, "shell": 1}
         if kind in {"test_started", "analysis_started"}:
             self.stage_update(0 if event["phase"] == "baseline" else 4)
         elif kind in stage:
