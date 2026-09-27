@@ -9,169 +9,27 @@ test_provider_payloads_and_usage (test_api_adapter.AdapterTests) ... ok
 test_bad_read_is_rejected_without_escape (test_engine_v2.EngineTests) ... ok
 test_baseline_already_passing_is_not_reproduced_fix (test_engine_v2.EngineTests) ... ok
 test_bounded_feedback_and_valid_json_redaction (test_engine_v2.EngineTests) ... ok
+test_budget_stop_explains_output_reserve (test_engine_v2.EngineTests) ... ok
 test_cancel_before_work (test_engine_v2.EngineTests) ... ok
+test_complete_focus_includes_late_methods_and_honors_budget (test_engine_v2.EngineTests) ... ok
 test_deep_retrieval_and_cache_invalidation (test_engine_v2.EngineTests) ... ok
 test_empty_edit_is_not_verified (test_engine_v2.EngineTests) ... ok
+test_failed_candidate_retry_sees_accepted_changes_and_file_tail (test_engine_v2.EngineTests) ... ok
 test_in_memory_credential_redacted_from_evidence (test_engine_v2.EngineTests) ... ok
+test_invalid_batch_preserves_previous_valid_candidate (test_engine_v2.EngineTests) ... ok
+test_json_secrets_are_redacted_from_retrieved_source (test_engine_v2.EngineTests) ... ok
 test_malformed_response_is_recoverable (test_engine_v2.EngineTests) ... ok
+test_mixed_noop_and_real_edit_keeps_progress (test_engine_v2.EngineTests) ... ok
+test_noop_only_is_rejected (test_engine_v2.EngineTests) ... ok
 test_provider_usage_is_separate_and_enforced (test_engine_v2.EngineTests) ... ok
+test_python_syntax_rejection_is_atomic (test_engine_v2.EngineTests) ... ok
 test_read_then_repair (test_engine_v2.EngineTests) ... ok
+test_recovery_accepts_four_independent_edits (test_engine_v2.EngineTests) ... ok
+test_recovery_supplies_only_fresh_focus_source (test_engine_v2.EngineTests) ... ok
+test_repeated_noop_stops_after_focused_retry (test_engine_v2.EngineTests) ... ok
 test_running_process_cancellation (test_engine_v2.EngineTests) ... ok
 test_sensitive_and_symlink_files_excluded (test_engine_v2.EngineTests) ... ok
+test_syntax_rejection_recovers_without_testing_broken_candidate (test_engine_v2.EngineTests) ... ok
+test_test_discovery_names_are_read_only (test_engine_v2.EngineTests) ... ok
 test_tests_and_test_configuration_are_protected (test_engine_v2.EngineTests) ... ok
-test_tiny_budget_prevents_model_call (test_engine_v2.EngineTests) ... ok
-test_verifier_modifying_source_invalidates_patch (test_engine_v2.EngineTests) ... ok
-test_adapter_recovery (test_harness.HarnessTests) ... {
-  "mode": "model_adapter",
-  "model": "external adapter",
-  "provider": "external",
-  "base_commit": "6546302232c24efa5dbdc5912734cc4aa2df942e",
-  "status": "verified_candidate",
-  "verification": "passed",
-  "attempts": 2,
-  "estimated_tokens": 794,
-  "input_tokens_estimate": 746,
-  "output_tokens_estimate": 48,
-  "provider_input_tokens": 0,
-  "provider_output_tokens": 0,
-  "provider_cached_input_tokens": 0,
-  "provider_usage_calls": 0,
-  "context_full_tokens_estimate": 74,
-  "context_selected_tokens_estimate": 186,
-  "token_budget": 12000,
-  "model_calls": 2,
-  "test_command": [
-    "/Library/Developer/CommandLineTools/usr/bin/python3",
-    "check.py"
-  ],
-  "changed": true,
-  "context_strategy": "ranked_line_excerpts",
-  "baseline_verification": "failed",
-  "elapsed_seconds": 0.618,
-  "context_tokens_avoided_estimate": 0,
-  "context_reduction_percent": 0.0,
-  "provider_usage_complete": false
-}
-ok
-test_budget (test_harness.HarnessTests) ... {
-  "mode": "simulation",
-  "model": "fixture",
-  "provider": "fixture",
-  "base_commit": "6546302232c24efa5dbdc5912734cc4aa2df942e",
-  "status": "incomplete",
-  "verification": "failed",
-  "attempts": 1,
-  "estimated_tokens": 0,
-  "input_tokens_estimate": 0,
-  "output_tokens_estimate": 0,
-  "provider_input_tokens": 0,
-  "provider_output_tokens": 0,
-  "provider_cached_input_tokens": 0,
-  "provider_usage_calls": 0,
-  "context_full_tokens_estimate": 0,
-  "context_selected_tokens_estimate": 0,
-  "token_budget": 1,
-  "model_calls": 0,
-  "test_command": [
-    "/Library/Developer/CommandLineTools/usr/bin/python3",
-    "check.py"
-  ],
-  "changed": false,
-  "context_strategy": "ranked_line_excerpts",
-  "baseline_verification": "failed",
-  "error": "Estimated token budget exhausted before model call",
-  "elapsed_seconds": 0.234,
-  "context_tokens_avoided_estimate": 0,
-  "context_reduction_percent": 0.0,
-  "provider_usage_complete": false
-}
-ok
-test_dirty_refused (test_harness.HarnessTests) ... ok
-test_end_to_end (test_harness.HarnessTests) ... {
-  "mode": "simulation",
-  "model": "fixture",
-  "provider": "fixture",
-  "base_commit": "a9071b02b0f3f6328a58d6a83f336ea7cc0e67a9",
-  "status": "verified_candidate",
-  "verification": "passed",
-  "attempts": 1,
-  "estimated_tokens": 431,
-  "input_tokens_estimate": 404,
-  "output_tokens_estimate": 27,
-  "provider_input_tokens": 0,
-  "provider_output_tokens": 0,
-  "provider_cached_input_tokens": 0,
-  "provider_usage_calls": 0,
-  "context_full_tokens_estimate": 37,
-  "context_selected_tokens_estimate": 93,
-  "token_budget": 12000,
-  "model_calls": 1,
-  "test_command": [
-    "/Library/Developer/CommandLineTools/usr/bin/python3",
-    "check.py"
-  ],
-  "changed": true,
-  "context_strategy": "ranked_line_excerpts",
-  "baseline_verification": "failed",
-  "elapsed_seconds": 0.475,
-  "context_tokens_avoided_estimate": 0,
-  "context_reduction_percent": 0.0,
-  "provider_usage_complete": false
-}
-ok
-test_missing_tests (test_harness.HarnessTests) ... {
-  "mode": "simulation",
-  "model": "fixture",
-  "provider": "fixture",
-  "base_commit": "a9071b02b0f3f6328a58d6a83f336ea7cc0e67a9",
-  "status": "unverified_candidate",
-  "verification": "missing",
-  "attempts": 1,
-  "estimated_tokens": 320,
-  "input_tokens_estimate": 293,
-  "output_tokens_estimate": 27,
-  "provider_input_tokens": 0,
-  "provider_output_tokens": 0,
-  "provider_cached_input_tokens": 0,
-  "provider_usage_calls": 0,
-  "context_full_tokens_estimate": 37,
-  "context_selected_tokens_estimate": 93,
-  "token_budget": 12000,
-  "model_calls": 1,
-  "test_command": null,
-  "changed": true,
-  "context_strategy": "ranked_line_excerpts",
-  "baseline_verification": "missing",
-  "elapsed_seconds": 0.288,
-  "context_tokens_avoided_estimate": 0,
-  "context_reduction_percent": 0.0,
-  "provider_usage_complete": false
-}
-ok
-test_path_guards_and_atomic_rejection (test_harness.HarnessTests) ... ok
-test_timeout (test_harness.HarnessTests) ... ok
-test_dashboard_metric_references_and_datasource (test_observability.ObservabilityTests) ... ok
-test_connection_keeps_key_in_memory_and_requires_new_endpoint_key (test_server.ServerTests) ... ok
-test_cross_origin_and_wrong_token_rejected (test_server.ServerTests) ... ok
-test_exporter_skips_unfinished_runs (test_server.ServerTests) ... ok
-test_run_artifacts_metrics_and_reload (test_server.ServerTests) ... ok
-test_static_csp_and_no_traversal (test_server.ServerTests) ... ok
-test_validation_and_missing_model (test_server.ServerTests) ... ok
-test_current_submission_has_no_detected_embedded_keys (test_submission.SubmissionTests) ... ok
-test_large_files_bounded_and_unchanged_cache_reused (test_submission.SubmissionTests) ... ok
-test_live_patch_available_before_candidate_verification (test_submission.SubmissionTests) ... ok
-test_package_excludes_local_data_and_history (test_submission.SubmissionTests) ... /var/folders/4y/cslp60_j3dbbp5ldnjqg31tr0000gn/T/tmp4yprqsjc/dist/rakshak-submission.zip
-5 source files; Git history, credentials, runs and big.js excluded.
-ok
-test_prescribed_model_and_endpoint_kept (test_submission.SubmissionTests) ... ok
-test_runtime_key_only_no_provider_fallback (test_submission.SubmissionTests) ... ok
-test_settings_validate_budgets_and_missing_key (test_submission.SubmissionTests) ... ok
-test_apply_requires_explicit_confirmation (test_submission.TUITests) ... ok
-test_demo_automatic_modification_pipeline_and_patch (test_submission.TUITests) ... ok
-test_launch_small_and_large_no_key_or_repo_mutation (test_submission.TUITests) ... ok
-test_live_run_requires_runtime_key_and_does_not_execute_issue (test_submission.TUITests) ... ok
-
-----------------------------------------------------------------------
-Ran 48 tests in 18.193s
-
-OK
+test_tiny_budget_prevents_model_call (test_engine_v2.EngineTests) ... 
