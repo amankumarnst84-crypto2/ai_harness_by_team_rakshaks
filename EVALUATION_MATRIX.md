@@ -131,6 +131,20 @@ RHI = 0.35 * D1 + 0.20 * D3 + 0.15 * D2 + 0.15 * D4 + 0.15 * D5
 ### Weight Sensitivity & Robustness
 Evaluators frequently criticize composite indexes for having arbitrary weights. To validate the RHI, we conduct a Monte Carlo sensitivity analysis varying all dimension weights by ±10%. The ordinal ranking of evaluated agents remains statistically stable (Spearman's rank correlation $r_s > 0.98$) across thousands of permutations. This mathematically guarantees that RHI reflects underlying capability, not arbitrary weight-tuning bias.
 
+### Component Ablation Protocol (Isolating Harness Value)
+To definitively prove that the Rakshak harness adds independent engineering value (rather than just acting as a passthrough for a smart LLM), we define a strict ablation protocol:
+
+1. **Fix Variables:** Lock the underlying model, provider, and temperature (e.g., `gpt-4o`, temp=0).
+2. **Establish Baseline:** Run the full harness on the SWE-bench Verified dataset ($N=300$).
+3. **Component Ablation:** Disable one harness feature at a time and re-run:
+   - Without AST-anchored lexical slicing (fallback to whole files).
+   - Without the Syntax/AST validity pre-check gate.
+   - Without the Baseline Pre-verification (No-op) gate.
+   - Without the Iterative Test-Driven Retry loop.
+4. **Report $\Delta RR$:** Calculate the drop in Resolve Rate (RR) for each ablation.
+
+*Reporting this Model Ablation Delta ($MAD$) shifts the evaluation from "here's what we built" to mathematically proving "here's what actually matters."*
+
 ---
 
 ## 4. How to Reproduce & Score Locally
