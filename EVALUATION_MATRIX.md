@@ -1,4 +1,6 @@
-# Globally Recognized Evaluation Matrix for Autonomous AI Harnesses
+# Composite Evaluation Framework for Agentic Repair Harnesses (v1.0)
+
+Adopts SWE-bench F2P/P2P standards, CodeXGLUE AST matching, and AgentBench safety conventions. Extends them with harness-specific metrics for context economics and anti-tamper governance.
 
 > **Document Version:** 1.0.0  
 > **Target Framework:** Rakshak Autonomous AI Harness  
