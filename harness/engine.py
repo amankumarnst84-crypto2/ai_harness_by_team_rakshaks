@@ -18,9 +18,9 @@ Use at most one action per response (read, edits, or command). Never combine the
 Tests, verification scripts and project configuration are read-only. Fix the cause; do not disable checks.
 Preserve indentation. Python edit batches are syntax-checked before any changes are written.
 If an edit is rejected, no files in that batch changed; use the current excerpts to retry.
-Address the issue thoroughly. Provide working concrete implementation code; never output placeholders, stub functions, or '// TODO' comments. Multiple independent exact edits are allowed across affected files (maximum 20).
+Address the issue thoroughly. Provide working concrete implementation code; never output placeholders unless skipping unchanged lines. Multiple independent exact edits are allowed across affected files (maximum 20).
 When recovery is present, prefer its focus_file.
-Copy old text literally from the fresh content, including whitespace. Omit unchanged edits.
+Copy old text literally from the fresh content. You may use `...` or `# ...` on a line by itself in both `old` and `new` to skip long blocks of unchanged boilerplate.
 Excerpts contain original file text. Keep indentation. Do not claim success without test evidence."""
 
 AUTO_INSTRUCTION = """\nThis is repo-only mode with static syntax checks, NOT runtime tests.

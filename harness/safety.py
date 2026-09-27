@@ -118,6 +118,23 @@ def find_and_replace_tolerant(data, old, new):
         replaced = data_norm.replace(old_norm, new_norm, 1)
         return replaced if "\r\n" not in data else replaced.replace("\n", "\r\n")
 
+    ellipsis_pattern = re.compile(r'^\s*(?:#|//)?\s*\.\.\.\s*$', re.MULTILINE)
+    if ellipsis_pattern.search(old_norm):
+        parts = ellipsis_pattern.split(old_norm)
+        if len(parts) > 1:
+            escaped_parts = [re.escape(p) for p in parts]
+            regex_str = r'(.*?)'.join(escaped_parts)
+            matches = list(re.finditer(regex_str, data_norm, flags=re.DOTALL))
+            if len(matches) == 1:
+                match = matches[0]
+                new_parts = ellipsis_pattern.split(new_norm)
+                if len(new_parts) == len(parts):
+                    final_new = new_parts[0]
+                    for i in range(1, len(new_parts)):
+                        final_new += match.group(i) + new_parts[i]
+                    replaced = data_norm[:match.start()] + final_new + data_norm[match.end():]
+                    return replaced if "\r\n" not in data else replaced.replace("\n", "\r\n")
+
     old_lines = old_norm.splitlines()
     data_lines = data_norm.splitlines()
     if old_lines and len(data_lines) >= len(old_lines):
