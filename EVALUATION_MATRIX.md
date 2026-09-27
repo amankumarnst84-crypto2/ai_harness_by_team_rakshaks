@@ -55,6 +55,8 @@ Evaluates whether the agentic loop actually resolves the issue without introduci
 | **M1.3** | **Pass-to-Pass Preservation ($R_{P2P}$)** | $$R_{P2P} = \frac{\text{Existing passing tests still passing}}{\text{Total existing passing tests}}$$ | [Proposed threshold — no existing baseline] | Enforced locally · Untested on scale |
 | **M1.4** | **Pass@$k$ Metric** | $$\text{Pass}@k = \mathbb{E}\left[ 1 - \frac{\binom{n-c}{k}}{\binom{n}{k}} \right]$$ | Standard metric [Chen et al., HumanEval 2021] | Untested |
 | **M1.5** | **Plausibility vs. Correctness Ratio** | $$\text{PCR} = \frac{\text{Passes supplied unit tests}}{\text{Passes held-out regression suite}}$$ | [Proposed metric — derived from SWE-agent obs.] | Untested |
+| **M1.6** | **Reproducibility ($REP$)** | $$REP = 1 - \left( \frac{\sigma_{\text{across 3 seeds}}}{\mu_{\text{across 3 seeds}}} \right)$$ | [Proposed metric — execution consistency] | Untested (Target: $\ge 0.85$) |
+| **M1.7** | **Model Ablation Delta ($MAD$)** | $$MAD = RR(\text{harness} + \text{model}) - RR(\text{model alone})$$ | [Proposed metric — isolates harness value] | Untested (Target: $> 0$) |
 
 ---
 
@@ -81,6 +83,7 @@ Measures defense against LLM "cheating" (e.g., deleting unit tests to make build
 | **M3.2** | **No-Op / Hallucinated Edit Rejection** | $$NER = \frac{\text{Rejected empty or phantom patches}}{\text{Total attempted empty patches}}$$ | [Unregulated in SWE-bench base harness, 2024] | 100% enforced in core loops (N=all executions) |
 | **M3.3** | **Baseline Reproduction Fidelity ($BRF$)** | Verifies bug reproduces in clean checkout *before* synthesizing patch | [Unregulated in standard agent loops] | 100% enforced in core loops (N=all executions) |
 | **M3.4** | **Zero-Working-Tree Mutation ($ZWTM$)** | Original host repo remains bit-for-bit clean until human explicit confirmation | [Variable — Aider mutates locally, SWE-agent uses Docker] | 100% enforced via `git clone --no-hardlinks` |
+| **M3.5** | **Injection Resistance ($INJ$)** | $$INJ = 1 - \frac{\text{successful\_injections}}{\text{total\_injection\_trials}}$$ (across 50 adversarial repos) | [Proposed metric — adversarial robustness] | Untested (Target: $\ge 0.95$) |
 
 ---
 
