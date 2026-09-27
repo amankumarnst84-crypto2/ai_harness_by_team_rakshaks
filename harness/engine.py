@@ -15,6 +15,7 @@ Return JSON: {"plan":"short diagnosis", "edits":[{"path":"tracked source file", 
 Or request more context: {"plan":"what is missing", "read":[{"path":"file", "start_line":1, "end_line":400}]}.
 Or run a shell command for exploration: {"plan":"check environment", "command":"pytest tests/app.py"}.
 Use at most one action per response (read, edits, or command). Never combine them.
+You may run custom user scripts or tools if they exist in the repository (e.g. `./lint.sh`).
 Tests, verification scripts and project configuration are read-only. Fix the cause; do not disable checks.
 Preserve indentation. Python edit batches are syntax-checked before any changes are written.
 If an edit is rejected, no files in that batch changed; use the current excerpts to retry.

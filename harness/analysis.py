@@ -11,8 +11,12 @@ from .retrieval import Index
 from .safety import Stop, command, protected_file
 
 DEFAULT_ISSUE = "Inspect this repository for concrete bugs across related source files. Use the static diagnostics and local dependency graph. Propose minimal justified fixes, or return findings when a fix cannot be established. Do not change tests or claim runtime behavior was verified."
-CODE_SUFFIXES = {".py", ".js", ".cjs", ".mjs", ".json", ".ts", ".tsx", ".jsx", ".go", ".rs", ".java", ".c", ".cpp"}
+CODE_SUFFIXES = {".py", ".js", ".cjs", ".mjs", ".json", ".ts", ".tsx", ".jsx", ".go", ".rs", ".java", ".c", ".cpp", ".h", ".hpp"}
 JS_IMPORT = re.compile(r'''(?:\b(?:import|export)\s+(?:[^;\n]*?\s+from\s+)?|\brequire\s*\(\s*)["'](\.[^"']+)["']''')
+RUST_IMPORT = re.compile(r'''\b(?:use|mod)\s+([a-zA-Z0-9_:]+)''')
+GO_IMPORT = re.compile(r'''\bimport\s+(?:\(\s*)?(?:[a-zA-Z0-9_]+\s+)?["']([^"']+)["']''')
+JAVA_IMPORT = re.compile(r'''\bimport\s+([a-zA-Z0-9_.]+)''')
+C_INCLUDE = re.compile(r'''#include\s+["<]([^">]+)[">]''')
 
 
 def graph_for(files):
@@ -21,7 +25,7 @@ def graph_for(files):
 
     def link(source, target):
         target = posixpath.normpath(target)
-        for candidate in (target, target + ".py", target + "/__init__.py", target + ".js", target + ".mjs", target + ".cjs", target + "/index.js"):
+        for candidate in (target, target + ".py", target + "/__init__.py", target + ".js", target + ".ts", target + ".tsx", target + ".go", target + ".rs", target + ".java", target + ".c", target + ".cpp", target + ".h"):
             if candidate in names and candidate != source:
                 edges.add((source, candidate))
                 break
@@ -47,8 +51,21 @@ def graph_for(files):
                     link(name, target)
                     for alias in item.names:
                         link(name, posixpath.join(target, alias.name))
-        elif PurePosixPath(name).suffix in {".js", ".mjs", ".cjs"}:
+        elif PurePosixPath(name).suffix in {".js", ".mjs", ".cjs", ".ts", ".tsx", ".jsx"}:
             for target in JS_IMPORT.findall(f["content"]):
+                link(name, posixpath.join(parent, target))
+        elif name.endswith(".go"):
+            for target in GO_IMPORT.findall(f["content"]):
+                link(name, posixpath.join(parent, target))
+                link(name, target)
+        elif name.endswith(".rs"):
+            for target in RUST_IMPORT.findall(f["content"]):
+                link(name, posixpath.join(parent, target.replace("::", "/")))
+        elif name.endswith(".java"):
+            for target in JAVA_IMPORT.findall(f["content"]):
+                link(name, posixpath.join(parent, target.replace(".", "/")))
+        elif PurePosixPath(name).suffix in {".c", ".cpp", ".h", ".hpp"}:
+            for target in C_INCLUDE.findall(f["content"]):
                 link(name, posixpath.join(parent, target))
     return [{"from": a, "to": b, "kind": "test_import" if protected_file(a) else "import"} for a, b in sorted(edges)]
 
