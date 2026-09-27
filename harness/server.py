@@ -148,7 +148,7 @@ class Store:
             args = argparse.Namespace(repo=repo, issue=issue, test=test, mock=mock, adapter=adapter,
                                       adapter_env=adapter_env, model_label=job["model"],
                                       output=str(directory / "result"), attempts=attempts, tokens=tokens,
-                                      seconds=300, command_seconds=120, max_output_tokens=3000, context_chars=min(120000, max(24000, tokens * 3)),
+                                      seconds=900, command_seconds=120, max_output_tokens=3000, context_chars=min(120000, max(24000, tokens * 3)),
                                       auto_check=not test, audit_gate=True,
                                       quiet=True, cancel=job["cancel"], on_event=on_event)
             try:

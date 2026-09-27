@@ -29,7 +29,7 @@ def main():
     parser.add_argument("--api-key-env", help="Environment variable containing the API key")
     parser.add_argument("--test", type=json.loads, help="JSON argv array; trusted command")
     parser.add_argument("--attempts", type=int, default=5)
-    parser.add_argument("--seconds", type=float, default=180)
+    parser.add_argument("--seconds", type=float, default=900)
     parser.add_argument("--command-seconds", type=float, default=60)
     parser.add_argument("--tokens", type=int, default=12000, help="Estimated token ceiling, not a billing guarantee")
     parser.add_argument("--context-chars", type=int, default=10000)
