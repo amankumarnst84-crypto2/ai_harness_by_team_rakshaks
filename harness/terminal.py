@@ -142,6 +142,8 @@ class Terminal:
             self.say("\nAI > " + event["plan"], "title")
         elif kind == "edited":
             self.say(stamp + "Edited " + ", ".join(event["files"]))
+        elif kind == "recovery":
+            self.say(stamp + "Focused recovery: " + event["focus_file"] + " (fresh source, minimal edit)", "warn")
         elif kind == "read":
             self.say(stamp + "Model requested additional source ranges.", "muted")
         elif kind in {"edit_rejected", "response_rejected", "stopped"}:
@@ -153,6 +155,9 @@ class Terminal:
         self.say("Tokens: {:,} estimated / {:,} budget | Calls: {} | Time: {:.1f}s".format(report.get("estimated_tokens", 0), report.get("token_budget", job.get("tokens", 0)), report.get("model_calls", 0), report.get("elapsed_seconds", 0)))
         if report.get("provider_usage_complete"):
             self.say("Provider usage: {:,} input + {:,} output tokens".format(report["provider_input_tokens"], report["provider_output_tokens"]))
+        used = max(report.get("estimated_tokens", 0), report.get("provider_input_tokens", 0) + report.get("provider_output_tokens", 0))
+        budget = report.get("token_budget", job.get("tokens", 0))
+        self.say("Budget accounting: {:,} used / {:,}; {:,} remaining (max of estimate and reported usage).".format(used, budget, max(0, budget - used)))
         if report.get("error"):
             self.say(report["error"], "error")
         if job["status"] == "tests_pass_candidate":

@@ -92,7 +92,7 @@ class Index:
         self.cache = {f["path"]: f for f in files}
         return self
 
-    def select(self, query, char_budget=10000, reads=None):
+    def select(self, query, char_budget=10000, reads=None, focus=None):
         self.refresh()
         terms = set(words(query)) - STOP_WORDS
         counts = {f["path"]: f.get("words") if f.get("words") is not None else Counter(words(f["content"])) for f in self.files}
@@ -138,6 +138,16 @@ class Index:
                 seen.add((f["path"], start, end))
                 used += cost
 
+        # A bounded complete focused file avoids repeatedly hiding its later methods.
+        complete_focus = False
+        if focus in by_path:
+            f = by_path[focus]
+            cost = len(json.dumps({"path": f["path"], "start_line": 1, "end_line": len(f["lines"]),
+                                   "sha256": f["sha256"][:16], "content": f["content"], "truncated": False}, ensure_ascii=False)) + 4
+            if cost <= char_budget:
+                add(f, 1, len(f["lines"]))
+                complete_focus = True
+
         for request in (reads or [])[:4]:
             if not isinstance(request, dict) or request.get("path") not in by_path:
                 raise Stop("Requested read must target an indexed tracked file")
@@ -145,8 +155,11 @@ class Index:
             end = request.get("end_line", start + 79)
             if type(start) is not int or type(end) is not int or start < 1 or end < start or end - start > 199:
                 raise Stop("Read ranges must contain 1-200 lines")
-            add(by_path[request["path"]], start, end)
+            if not complete_focus or request["path"] != focus:
+                add(by_path[request["path"]], start, end)
         for f in ranked:
+            if focus and (f["path"] != focus or complete_focus):
+                continue
             if scores[f["path"]] <= 0 and selected:
                 break
             lines = f["lines"]

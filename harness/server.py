@@ -89,7 +89,7 @@ class Store:
         job["patch"] = path.read_text() if path.exists() else ""
         return job
 
-    def start(self, data):
+    def start(self, data, cancel=None):
         if not isinstance(data, dict):
             raise ValueError("Expected a JSON object")
         mode = data.get("mode", "demo")
@@ -125,7 +125,7 @@ class Store:
                 mock = None
             job = {"id": identity, "created": datetime.now(timezone.utc).isoformat(), "issue": issue,
                    "repo": repo, "mode": mode, "status": "running", "events": [], "report": None,
-                   "tokens": tokens, "attempts": attempts, "test": test, "cancel": threading.Event()}
+                   "tokens": tokens, "attempts": attempts, "test": test, "cancel": cancel if cancel is not None else threading.Event()}
             adapter, adapter_env = self.adapter, dict(self.adapter_env)
             job["model"] = "fixture" if mode == "demo" else self.public_config()["model"]
             self.jobs[identity] = job

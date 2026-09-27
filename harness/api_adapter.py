@@ -79,13 +79,15 @@ def complete(request, env):
             reported["cached_input_tokens"] = cached
     choice = result["choices"][0]
     if choice.get("finish_reason") == "length":
-        return {"plan": "Provider output reached the configured cap before completion.", "edits": [], "usage": reported}
+        return {"plan": "Provider output reached the configured cap before completion.",
+                "adapter_error": "Output was truncated. Retry one small edit to one file, not a full rewrite.", "edits": [], "usage": reported}
     try:
         answer = json.loads(choice["message"]["content"])
         if not isinstance(answer, dict):
             raise ValueError("Expected object")
     except (TypeError, ValueError):
-        return {"plan": "Provider returned invalid JSON. Retry with a complete JSON edit object.", "edits": [], "usage": reported}
+        return {"plan": "Provider returned invalid JSON. Retry with a complete JSON edit object.",
+                "adapter_error": "Invalid JSON. Retry one small edit to one file using valid JSON.", "edits": [], "usage": reported}
     answer["usage"] = reported
     return answer
 

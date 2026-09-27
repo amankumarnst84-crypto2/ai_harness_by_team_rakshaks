@@ -5,6 +5,8 @@ import json
 import os
 from pathlib import Path
 import tempfile
+import threading
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 import zipfile
@@ -142,6 +144,9 @@ class TUITests(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(app.query_one("#apply", Button).disabled)
             self.assertFalse(app.query_one("#run", Button).disabled)
             self.assertTrue(any(event["event"] == "edited" for event in job["events"]))
+            metrics = str(app.query_one("#metrics", Static).render())
+            self.assertIn("Budget", metrics)
+            self.assertIn("Remaining", metrics)
             self.assertTrue(app.query_one("#errors").lines)
             await pilot.press("ctrl+p")
             await pilot.pause(.2)
@@ -170,6 +175,62 @@ class TUITests(unittest.IsolatedAsyncioTestCase):
             self.assertIsInstance(app.screen, ConfirmApply)
             await pilot.click("#dismiss")
             self.assertFalse(isinstance(app.screen, ConfirmApply))
+
+    async def test_stop_during_preparation_is_preserved(self):
+        app = RakshakTUI(workspace=self.root, settings=self.settings)
+        entered, release = threading.Event(), threading.Event()
+        original = app.store.start
+
+        def delayed_start(data, cancel=None):
+            entered.set()
+            release.wait(5)
+            return original(data, cancel=cancel)
+
+        async with app.run_test(size=(120, 40)) as pilot:
+            with patch.object(app.store, "start", side_effect=delayed_start):
+                app.begin(demo=True)
+                try:
+                    for _ in range(50):
+                        await pilot.pause(.02)
+                        if entered.is_set():
+                            break
+                    self.assertTrue(entered.is_set())
+                    self.assertIsNone(app.store.active)
+                    app.action_cancel()
+                    self.assertTrue(app.cancel_requested.is_set())
+                finally:
+                    release.set()
+                for _ in range(100):
+                    await pilot.pause(.05)
+                    if app.finished:
+                        break
+                self.assertIsNotNone(app.finished)
+                job = app.store.detail(app.selected)
+                self.assertEqual(job["status"], "cancelled")
+                self.assertEqual(job["report"]["model_calls"], 0)
+
+    async def test_history_replaces_stale_panels_and_workspace(self):
+        app = RakshakTUI(workspace=self.root, settings=self.settings)
+        async with app.run_test(size=(120, 40)) as pilot:
+            app.begin(demo=True)
+            for _ in range(100):
+                await pilot.pause(.05)
+                if app.finished:
+                    break
+            self.assertIsNotNone(app.finished)
+            identity = app.selected
+            job = app.store.detail(identity)
+            for name in ("activity", "errors", "tests", "context"):
+                app.query_one("#" + name).write("STALE_RUN_SENTINEL")
+            app.query_one("#workspace-info", Static).update("wrong workspace")
+            app.query_one("#model-status", Static).update("wrong model")
+            app.on_input_submitted(SimpleNamespace(input=app.query_one("#history-select", Input), value=identity))
+            await pilot.pause()
+            self.assertIn(Path(job["repo"]).name, str(app.query_one("#workspace-info", Static).render()))
+            self.assertIn("fixture", str(app.query_one("#model-status", Static).render()))
+            self.assertEqual(app.query_one("#issue", TextArea).text, job["issue"])
+            for name in ("activity", "errors", "tests", "context"):
+                self.assertNotIn("STALE_RUN_SENTINEL", "".join(line.text for line in app.query_one("#" + name).lines))
 
 
 if __name__ == "__main__":

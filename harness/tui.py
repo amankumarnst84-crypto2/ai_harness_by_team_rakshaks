@@ -4,6 +4,7 @@ import asyncio
 from dataclasses import replace
 import json
 import os
+import threading
 from pathlib import Path
 
 from rich.syntax import Syntax
@@ -96,6 +97,7 @@ class RakshakTUI(App):
         self.quitting = False
         self.reviewing = False
         self.stage = -1
+        self.cancel_requested = threading.Event()
         self.terminal = Terminal(self.store, writer=self.log_message)
 
     def compose(self) -> ComposeResult:
@@ -198,6 +200,10 @@ class RakshakTUI(App):
             self.show_error("Enter a text issue before starting.")
             return
         self.set_busy(True)
+        self.cancel_requested.clear()
+        self.selected, self.finished, self.seen, self.stage = None, None, 0, -1
+        self.query_one("#pipeline", Static).update("\n".join("[ ] " + stage for stage in STAGES))
+        self.query_one("#metrics", Static).update("Preparing run")
         self.query_one("#errors", RichLog).clear()
         self.query_one("#patch", RichLog).clear()
         self.query_one("#tests", RichLog).clear()
@@ -219,7 +225,7 @@ class RakshakTUI(App):
             else:
                 test = None
             identity = self.store.start({"mode": "demo" if demo else "model", "repo": self.terminal.repo,
-                                         "test": test, "issue": issue, "tokens": tokens, "attempts": attempts})
+                                         "test": test, "issue": issue, "tokens": tokens, "attempts": attempts}, cancel=self.cancel_requested)
             self.call_from_thread(self.started, identity, issue, demo)
         except (ValueError, OSError, Stop) as exc:
             self.call_from_thread(self.set_busy, False)
@@ -287,11 +293,14 @@ class RakshakTUI(App):
         self.terminal.summary(job)
         self.render_patch(job.get("patch", ""))
         self.query_one("#apply", Button).disabled = not (success and job["mode"] != "demo" and bool(job.get("patch")))
+        provider_tokens = report.get("provider_input_tokens", 0) + report.get("provider_output_tokens", 0)
+        budget_used = max(report.get("estimated_tokens", 0), provider_tokens)
         self.query_one("#metrics", Static).update(
-            "Estimated {:,} / {:,}\nProvider {}\nContext reduction {}%\nCalls {} / {:.1f}s".format(
-                report.get("estimated_tokens", 0), job["tokens"],
-                str(report.get("provider_input_tokens", 0) + report.get("provider_output_tokens", 0)) if report.get("provider_usage_complete") else "not fully reported",
-                report.get("context_reduction_percent", 0), report.get("model_calls", 0), report.get("elapsed_seconds", 0)))
+            "Budget {:,} / {:,}\nRemaining {:,}\nEstimated {:,}\nProvider {}\nCalls {} / {:.1f}s".format(
+                budget_used, job["tokens"], max(0, job["tokens"] - budget_used),
+                report.get("estimated_tokens", 0),
+                "{:,}".format(provider_tokens) if report.get("provider_usage_complete") else "partial / unavailable",
+                report.get("model_calls", 0), report.get("elapsed_seconds", 0)))
         self.refresh_history()
         if self.quitting:
             self.exit()
@@ -317,9 +326,20 @@ class RakshakTUI(App):
                 self.show_error("Unknown run ID")
                 return
             self.selected, self.terminal.selected, self.seen, self.finished = identity, identity, 0, None
+            job = self.store.detail(identity)
+            for name in ("activity", "errors", "tests", "context", "patch"):
+                self.query_one("#" + name, RichLog).clear()
+            self.stage = -1
+            self.query_one("#pipeline", Static).update("\n".join("[ ] " + stage for stage in STAGES))
+            self.query_one("#workspace-info", Static).update(Path(job["repo"]).name)
+            self.query_one("#model-status", Static).update(job["model"] + "\nHistorical run")
+            self.query_one("#issue", TextArea).load_text(job["issue"])
             self.poll_run()
 
     def action_cancel(self):
+        if self.busy:
+            self.cancel_requested.set()
+            self.query_one("#run-status", Static).update("Stopping; saving evidence...")
         if self.store.active:
             try:
                 self.store.cancel(self.store.active)

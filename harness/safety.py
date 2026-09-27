@@ -12,6 +12,12 @@ class Stop(Exception):
     pass
 
 
+class EditError(Stop):
+    def __init__(self, message, path, line=1):
+        super().__init__(message)
+        self.path, self.line = path, line
+
+
 def command(argv, cwd, timeout, env=None, limit=2000000, cancel=None):
     with tempfile.TemporaryFile() as out, tempfile.TemporaryFile() as err:
         proc = subprocess.Popen(argv, cwd=str(cwd), env=env, stdout=out,
@@ -75,8 +81,8 @@ def protected_file(name, test_command=()):
     path = Path(name)
     stem = path.stem.lower()
     return (any(p.lower() in {"test", "tests", "__tests__", "spec", "specs"} for p in path.parts)
-            or stem.startswith("test_") or stem.endswith("_test")
-            or ".test." in name or ".spec." in name
+            or stem.startswith("test") or stem.endswith(("_test", "test", "tests", "spec"))
+            or ".test." in name.lower() or ".spec." in name.lower()
             or path.name in {"conftest.py", "pytest.ini", "pyproject.toml", "setup.cfg", "tox.ini",
                              "package.json", "Makefile", "Cargo.toml", "go.mod"}
             or any(str(arg).removeprefix("./") == name for arg in (test_command or ())))
@@ -87,6 +93,7 @@ def edit(root, edits, test_command=()):
         raise Stop("Expected between 1 and 20 edits")
     tracked = set(git(root, "ls-files", "-z").split("\0"))
     staged = {}
+    original = {}
     for item in edits:
         if not isinstance(item, dict):
             raise Stop("Each edit must be an object")
@@ -99,20 +106,42 @@ def edit(root, edits, test_command=()):
         if path.stat().st_size > 200000:
             raise Stop("Edited file too large")
         data = staged[path] if path in staged else path.read_text()
+        original.setdefault(path, data)
         old, new = item["old"], item["new"]
-        if not isinstance(old, str) or not isinstance(new, str) or not old or data.count(old) != 1:
-            raise Stop("Edit requires exactly one matching nonempty old string")
+        if not isinstance(old, str) or not isinstance(new, str) or not old:
+            raise EditError("Edit requires nonempty old text and a string replacement", name)
         if old == new:
-            raise Stop("Edit makes no change")
+            continue
+        if data.count(old) != 1:
+            raise EditError("Edit requires exactly one matching old string; copy it from current source", name)
         staged[path] = data.replace(old, new, 1)
         if len(staged[path].encode()) > 200000:
             raise Stop("Edited file too large")
+    # Validate the whole batch before writing any file, preserving the last candidate.
+    for path, data in staged.items():
+        if path.suffix == ".py":
+            try:
+                compile(data, str(path.relative_to(root)), "exec", dont_inherit=True)
+            except (SyntaxError, ValueError) as exc:
+                line = getattr(exc, "lineno", None)
+                detail = getattr(exc, "msg", str(exc))
+                raise EditError("Python syntax rejected in {} at line {}: {}. "
+                           "No edits applied; retry against the unchanged source.".format(
+                               path.relative_to(root), line or "unknown", detail),
+                                str(path.relative_to(root)), line or 1) from None
+    if not any(data != original[path] for path, data in staged.items()):
+        raise EditError("Edit makes no change; propose a different, minimal replacement", edits[0]["path"])
     for path, data in staged.items():
         path.write_text(data)
 
 
 def redact(text):
-    text = re.sub(r"(?i)((?:api[_-]?key|access[_-]?token|password|secret)\s*[:=]\s*)[^\s,;]+", r"\1[REDACTED]", text)
+    pattern = r'''(?i)((?:["']?)(?:api[_-]?key|access[_-]?token|password|secret)(?:["']?)\s*[:=]\s*)("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|[^\s,;}]+)'''
+    def mask(match):
+        value = match[2]
+        quote = value[0] if value[0] in "\"'" else ""
+        return match[1] + quote + "[REDACTED]" + quote
+    text = re.sub(pattern, mask, text)
     for key, value in os.environ.items():
         if re.search(r"(?i)(key|token|secret|password)", key) and len(value) >= 6:
             text = text.replace(value, "[REDACTED]")
@@ -127,7 +156,8 @@ def clean(value, sensitive=()):
                 value = value.replace(secret, "[REDACTED]")
         return value
     if isinstance(value, dict):
-        return {k: clean(v, sensitive) for k, v in value.items()}
+        return {k: "[REDACTED]" if re.fullmatch(r"(?i)(api[_-]?key|access[_-]?token|password|secret)", str(k))
+                else clean(v, sensitive) for k, v in value.items()}
     if isinstance(value, list):
         return [clean(v, sensitive) for v in value]
     return value

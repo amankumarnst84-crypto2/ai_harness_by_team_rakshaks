@@ -93,6 +93,35 @@ verified_candidate means baseline failed and candidate passed the configured
 command. tests_pass_candidate means baseline already passed, not a reproduced fix.
 Neither outcome proves correctness against unseen cases.
 
+Python edit batches are compiled for syntax using the harness Python runtime
+before any file in the batch is written. Rejected batches preserve the previous
+candidate and return the filename and line number to the model for retry. This
+does not validate program semantics or other languages; candidate tests still run
+after accepted edits. Projects requiring newer Python syntax need a compatible
+harness runtime.
+
+Rejected syntax, unmatched edits and no-op-only responses trigger a bounded
+focused retry: the affected file is prioritized with fresh source. A complete
+focused file is included when it fits the bounded context and token allowance;
+otherwise bounded excerpts are used. The normal 20-edit batch limit also applies
+to recovery; four independent fixes are not rejected merely for their count.
+Unchanged replacements in a
+mixed response are skipped instead of blocking meaningful edits. Truncated
+provider responses request a smaller, focused edit. Repeated ineffective actions
+still stop; this recovery strategy does not guarantee a model will solve a task.
+
+Common test-discovery filenames (including testinvoice.py and Java/C# test
+suffixes) are read-only. These filename guards are conservative heuristics, not
+complete test identification for every framework. Quoted JSON credential fields
+are redacted, but automatic redaction cannot identify every secret; do not send
+sensitive repositories to a hosted provider.
+
+The TUI shows budget used and remaining separately from estimates and provider
+usage. Budget accounting uses the larger of cumulative estimated and reported
+tokens. Another call requires room for both its input and reserved output, so a
+run may stop with tokens remaining. Valid response usage is recorded even when
+the response exceeds the budget. These controls are not a guaranteed billing cap.
+
 Archive: dist/rakshak-submission.zip. SUBMISSION.md maps the supplied guidelines
 and explains the credential-history incident. Rotate keys embedded in older
 versions; do not publish old Git history or ZIPs without separate review.
