@@ -184,6 +184,16 @@ def run(args):
                 context_limit = max(getattr(args, "context_chars", 36000), 36000) if recovery else getattr(args, "context_chars", 36000)
                 files, repo_map, stats = index.select(query, min(context_limit, max(2400, (available - 600) * 3)), reads,
                                                      focus=recovery["focus_file"] if recovery else None)
+                edges = graph_for([{"path": p, "content": "".join(index.cache[p]["lines"])} for p in index.cache if "lines" in index.cache[p]])
+                enhanced_repo_map = []
+                for row in repo_map:
+                    filepath = row.split(" ")[0]
+                    deps = [e["to"] for e in edges if e["from"] == filepath]
+                    if deps:
+                        enhanced_repo_map.append(row + " (imports: " + ", ".join(deps[:4]) + ")")
+                    else:
+                        enhanced_repo_map.append(row)
+                repo_map = enhanced_repo_map
                 request = protect({"instruction": INSTRUCTION + (AUTO_INSTRUCTION if auto_check else ""), "issue": args.issue, "repo_map": repo_map,
                                  "files": files, "feedback": compact_feedback(feedback), "memory": memory[-2:],
                                  "attempt": attempt + 1, "max_output_tokens": reserve})
