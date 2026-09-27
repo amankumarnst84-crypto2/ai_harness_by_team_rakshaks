@@ -94,8 +94,8 @@ def run(args):
             if result["code"] or result["reason"]:
                 raise Stop("Isolated clone failed: " + str(result["reason"] or result["code"]))
             git(checkout, "checkout", "--detach", report["base_commit"])
-            env = {k: v for k, v in os.environ.items() if k in ("PATH", "LANG", "LC_ALL", "TMPDIR", "SYSTEMROOT")}
-            env.update(HOME=tmp, PYTHONDONTWRITEBYTECODE="1", GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL="/dev/null")
+            env = {k: v for k, v in os.environ.items() if k in ("PATH", "LANG", "LC_ALL", "TMPDIR", "SYSTEMROOT", "HOME", "PYTHONPATH")}
+            env.update(PYTHONDONTWRITEBYTECODE="1", GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL="/dev/null")
 
             true_baseline_commit = None
             for ref in ["baseline", "origin/baseline"]:
