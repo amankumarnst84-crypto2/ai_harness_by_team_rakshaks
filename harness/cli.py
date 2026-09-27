@@ -6,6 +6,7 @@ from pathlib import Path
 import sys
 
 from .engine import run
+from .analysis import DEFAULT_ISSUE
 from .retrieval import Index
 from .safety import Stop, command, edit, git, redact, safe_path
 
@@ -17,7 +18,7 @@ def context(root, issue, limit=16000):
 def main():
     parser = argparse.ArgumentParser(description="AI Harness: token-conscious, test-verified debugging")
     parser.add_argument("--repo", required=True)
-    parser.add_argument("--issue", required=True)
+    parser.add_argument("--issue", default=DEFAULT_ISSUE)
     parser.add_argument("--output", required=True)
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--mock", help="JSON response fixture; explicitly simulated model")
@@ -34,6 +35,13 @@ def main():
     parser.add_argument("--context-chars", type=int, default=10000)
     parser.add_argument("--max-output-tokens", type=int, default=1500)
     args = parser.parse_args()
+    from .intake import resolve_repo, resolve_issue
+    try:
+        args.repo = str(resolve_repo(args.repo))
+    except Exception as exc:
+        parser.error(f"Could not resolve repository '{args.repo}': {exc}")
+    args.issue = resolve_issue(args.issue, args.repo)
+    args.auto_check = not args.test
     if args.provider:
         from .api_adapter import configuration, KEYS
         try:

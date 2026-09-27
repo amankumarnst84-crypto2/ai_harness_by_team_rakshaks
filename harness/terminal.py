@@ -99,9 +99,20 @@ class Terminal:
         self.say("Configured " + provider + " / " + model + ". No generation call made yet.", "ok")
 
     def choose_repo(self, value):
-        root = Path(value or self.prompt("Repository path")).expanduser().resolve()
-        if not root.is_dir() or Path(git(root, "rev-parse", "--show-toplevel").strip()).resolve() != root:
-            raise ValueError("Choose the root of an existing Git repository")
+        from .intake import resolve_repo
+        raw = value or self.prompt("Repository path")
+        try:
+            root = resolve_repo(raw, self.store.directory)
+        except Stop as exc:
+            raise ValueError(str(exc))
+        try:
+            valid = root.is_dir() and Path(git(root, "rev-parse", "--show-toplevel").strip()).resolve() == root
+        except Stop:
+            valid = False
+        if not valid:
+            raise ValueError("Folder is not a Git repository root. Use make present for a fresh practice project, or initialize and commit your reviewed project.")
+        if git(root, "status", "--porcelain", "--untracked-files=all").strip():
+            raise ValueError("Repository has uncommitted changes. Preserve and commit reviewed changes, or use make present for a fresh project. No files were reset.")
         if root == self.store.directory or root in self.store.directory.parents:
             raise ValueError("Run data must be outside this repository; restart with chat --data /outside/path")
         self.repo = str(root)
@@ -129,11 +140,18 @@ class Terminal:
         stamp = "[{:.1f}s] ".format(event["elapsed_seconds"])
         if kind == "started":
             self.say(stamp + "Isolated checkout / " + event["mode"], "muted")
-        elif kind == "test_started":
+        elif kind in {"test_started", "analysis_started"}:
             self.say(stamp + "Running " + event["phase"] + " verification...", "muted")
         elif kind == "test":
             passed = event["verification"] == "passed"
             self.say(stamp + event["phase"].capitalize() + " tests: " + event["verification"].upper(), "ok" if passed else "warn")
+        elif kind == "analysis":
+            self.say(stamp + event["phase"].capitalize() + " static checks: " + event["verification"] + " (runtime behavior not verified)", "warn")
+        elif kind == "findings":
+            if event.get("findings"):
+                self.say("AI review findings: " + json.dumps(event["findings"]), "warn")
+            else:
+                self.say("AI review: No defects detected across inspected files.", "ok")
         elif kind == "context":
             self.say(stamp + "Context: {} files indexed / {:,} estimated tokens selected".format(event["indexed_files"], event["selected_context_tokens_estimate"]), "muted")
         elif kind == "model_started":
@@ -144,8 +162,12 @@ class Terminal:
             self.say(stamp + "Edited " + ", ".join(event["files"]))
         elif kind == "recovery":
             self.say(stamp + "Focused recovery: " + event["focus_file"] + " (fresh source, minimal edit)", "warn")
-        elif kind == "read":
-            self.say(stamp + "Model requested additional source ranges.", "muted")
+        elif kind == "audit_started":
+            self.say(stamp + "Behavioral Audit: Inspecting downstream impact on " + ", ".join(event.get("downstream", [])))
+        elif kind == "audit_passed":
+            self.say(stamp + "Behavioral Audit: Intentional change confirmed (" + event.get("reason", "compatible") + ")", "ok")
+        elif kind == "audit_flagged":
+            self.say(stamp + "Behavioral Audit: Unintended regression flagged in " + ", ".join(event.get("downstream", [])), "warn")
         elif kind in {"edit_rejected", "response_rejected", "stopped"}:
             self.say(stamp + event["detail"], "warn")
 
@@ -162,6 +184,8 @@ class Terminal:
             self.say(report["error"], "error")
         if job["status"] == "tests_pass_candidate":
             self.say("Baseline also passed; this command did not reproduce the reported bug.", "warn")
+        if report.get("verification_method") == "static_analysis":
+            self.say("Static analysis only: runtime behavior was NOT verified.", "warn")
         self.say("Evidence: " + str(self.store.directory / job["id"] / "result"), "muted")
         self.say("/patch  /tests  /context  /follow REQUIREMENT", "muted")
 
@@ -170,12 +194,14 @@ class Terminal:
             if not self.repo:
                 self.choose_repo("")
             if not self.test:
-                self.test = argv(self.prompt("Verification command"))
+                value = self.prompt("Verification command (Enter = static checks)")
+                self.test = argv(value) if value.strip() else None
             if not self.store.adapter:
                 self.connect("")
             issue = issue or self.issue or self.prompt("Describe the bug")
             if not issue.strip():
-                raise ValueError("Describe the bug first")
+                from .analysis import DEFAULT_ISSUE
+                issue = DEFAULT_ISSUE
             self.issue = issue
         else:
             self.say("SIMULATION: predetermined model response, real checkout and tests.", "warn")
@@ -204,12 +230,17 @@ class Terminal:
                     stopping = True
                     self.say("Stopping the active process; saving evidence...", "warn")
 
-    def apply(self):
+    def apply(self, allow_static=False):
         job = self.selected_job()
         report = job.get("report") or {}
         if job["mode"] == "demo":
             raise ValueError("Simulation patches are for inspection only")
-        if report.get("status") not in {"verified_candidate", "tests_pass_candidate"} or not job["patch"]:
+        allowed = {"verified_candidate", "tests_pass_candidate"}
+        if allow_static:
+            allowed.add("static_candidate")
+        if report.get("status") == "static_candidate" and not allow_static:
+            raise ValueError("Runtime behavior is not verified; explicit static-patch approval is required")
+        if report.get("status") not in allowed or not job["patch"]:
             raise ValueError("Only a nonempty candidate with passing tests can be applied")
         root = Path(job["repo"])
         if git(root, "rev-parse", "HEAD").strip() != report.get("base_commit"):
@@ -303,7 +334,11 @@ class Terminal:
                     self.say("Attempt {}: {:,} selected / {:,} full-source estimated tokens".format(event["attempt"], event["selected_context_tokens_estimate"], event["eligible_full_source_tokens_estimate"]))
                     self.say("\n".join(dict.fromkeys(event["paths"])))
         elif command == "/apply":
-            self.apply()
+            static_only = self.selected_job().get("status") == "static_candidate"
+            if static_only and self.prompt("Runtime behavior is NOT verified. Type APPLY to accept this static-only patch") != "APPLY":
+                self.say("Patch not applied.")
+            else:
+                self.apply(allow_static=static_only)
         elif command == "/metrics":
             self.say(self.store.metrics())
         else:

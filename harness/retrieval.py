@@ -22,7 +22,8 @@ def estimate(value):
 
 
 def words(text):
-    return re.findall(r"[a-z_][a-z_0-9]{1,}", text.lower())
+    expanded = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", text)
+    return re.findall(r"[a-z_][a-z_0-9]{1,}", expanded.lower())
 
 
 class Index:
@@ -152,20 +153,27 @@ class Index:
             if not isinstance(request, dict) or request.get("path") not in by_path:
                 raise Stop("Requested read must target an indexed tracked file")
             start = request.get("start_line", 1)
-            end = request.get("end_line", start + 79)
-            if type(start) is not int or type(end) is not int or start < 1 or end < start or end - start > 199:
-                raise Stop("Read ranges must contain 1-200 lines")
+            end = request.get("end_line", start + 399)
+            if type(start) is not int or type(end) is not int or start < 1 or end < start:
+                raise Stop("Read ranges must contain positive line numbers with end >= start")
+            max_read = 1000 if char_budget >= 30000 else 600
+            if end - start > max_read:
+                end = start + max_read
             if not complete_focus or request["path"] != focus:
                 add(by_path[request["path"]], start, end)
         for f in ranked:
             if focus and (f["path"] != focus or complete_focus):
                 continue
-            if scores[f["path"]] <= 0 and selected:
+            if scores[f["path"]] <= 0 and selected and (len(self.files) > 10 or used > char_budget // 2):
                 break
             lines = f["lines"]
             if not lines:
                 continue
-            if len(lines) <= 70:
+            file_cost = len(json.dumps({"path": f["path"], "start_line": 1, "end_line": len(lines),
+                                        "sha256": f["sha256"][:16], "content": f["content"], "truncated": False}, ensure_ascii=False)) + 4
+            if file_cost + used <= char_budget:
+                add(f, 1, len(lines))
+            elif len(lines) <= 70:
                 add(f, 1, len(lines))
             else:
                 matching = [s for s in f["symbols"] if s["name"].lower() in terms]

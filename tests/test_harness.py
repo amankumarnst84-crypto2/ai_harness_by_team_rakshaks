@@ -52,6 +52,7 @@ class HarnessTests(unittest.TestCase):
         adapter=self.base/'adapter.py'
         adapter.write_text("import json,sys\nr=json.load(open(sys.argv[1]))\nold='absent' if r['attempt']==1 else 'return a - b'\nprint(json.dumps({'plan':'repair','edits':[{'path':'calc.py','old':old,'new':'return a + b'}]}))\n")
         self.args.mock=None
+        self.args.seconds=40
         self.args.adapter=[sys.executable,str(adapter)]
         self.assertEqual(run(self.args),0)
         self.assertEqual(json.loads((self.base/'result/report.json').read_text())['attempts'],2)

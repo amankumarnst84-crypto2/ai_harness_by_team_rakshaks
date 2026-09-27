@@ -14,11 +14,19 @@ class AdapterTests(unittest.TestCase):
         cls.requests = []
         cls.content = json.dumps({"plan": "repair", "edits": [{"path": "app.py", "old": "a-b", "new": "a+b"}]})
         cls.finish = "stop"
+        cls.reject_thinking = False
 
         class FakeProvider(BaseHTTPRequestHandler):
             def do_POST(self):
                 payload = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
                 cls.requests.append({"path": self.path, "payload": payload, "authorization": self.headers.get("Authorization")})
+                if cls.reject_thinking and "thinking" in payload:
+                    body = json.dumps({"error": {"message": "unrecognized parameter thinking"}}).encode()
+                    self.send_response(400)
+                    self.send_header("Content-Length", str(len(body)))
+                    self.end_headers()
+                    self.wfile.write(body)
+                    return
                 result = {"choices": [{"message": {"content": cls.content}, "finish_reason": cls.finish}],
                           "usage": {"prompt_tokens": 100, "completion_tokens": 35, "prompt_tokens_details": {"cached_tokens": 40}}}
                 body = json.dumps(result).encode()
@@ -95,6 +103,17 @@ class AdapterTests(unittest.TestCase):
         self.assertEqual(payload["response_format"], {"type": "json_object"})
         self.assertTrue(all(isinstance(message["content"], str) for message in payload["messages"]))
         self.assertNotIn("test-only-key", json.dumps(payload))
+
+    def test_http_400_thinking_fallback_and_detail(self):
+        old = type(self).reject_thinking
+        try:
+            type(self).reject_thinking = True
+            env = configuration("deepseek", self.base, "deepseek-v4-pro", "test-only-key")
+            answer = complete({"instruction": "Return JSON edits", "issue": "repair", "max_output_tokens": 900}, env)
+            self.assertEqual(answer["edits"][0]["new"], "a+b")
+            self.assertNotIn("thinking", self.requests[-1]["payload"])
+        finally:
+            type(self).reject_thinking = old
 
     def test_model_list(self):
         models = call_api(self.base, "test-only-key", "/models")

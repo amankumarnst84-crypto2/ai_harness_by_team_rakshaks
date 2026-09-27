@@ -80,12 +80,81 @@ def safe_path(root, name):
 def protected_file(name, test_command=()):
     path = Path(name)
     stem = path.stem.lower()
-    return (any(p.lower() in {"test", "tests", "__tests__", "spec", "specs"} for p in path.parts)
-            or stem.startswith("test") or stem.endswith(("_test", "test", "tests", "spec"))
-            or ".test." in name.lower() or ".spec." in name.lower()
-            or path.name in {"conftest.py", "pytest.ini", "pyproject.toml", "setup.cfg", "tox.ini",
-                             "package.json", "Makefile", "Cargo.toml", "go.mod"}
-            or any(str(arg).removeprefix("./") == name for arg in (test_command or ())))
+    is_test = (any(p.lower() in {"test", "tests", "__tests__", "spec", "specs"} for p in path.parts)
+               or stem.startswith("test") or stem.endswith(("_test", "test", "tests", "spec"))
+               or ".test." in name.lower() or ".spec." in name.lower()
+               or "check" in stem or "verify" in stem)
+    is_config = path.name in {"conftest.py", "pytest.ini", "pyproject.toml", "setup.cfg", "tox.ini",
+                              "package.json", "Makefile", "Cargo.toml", "go.mod"}
+    is_test_arg = any(str(arg).removeprefix("./") == name and (is_test or "test" in str(arg).lower() or "check" in str(arg).lower())
+                      for arg in (test_command or ()))
+    return is_test or is_config or is_test_arg
+
+
+def strip_fences(text):
+    s = text.strip()
+    if s.startswith("```") and s.endswith("```"):
+        lines = s.splitlines()
+        if len(lines) >= 2 and lines[0].startswith("```") and lines[-1].startswith("```"):
+            return "\n".join(lines[1:-1])
+    return text
+
+
+def find_and_replace_tolerant(data, old, new):
+    if old == new:
+        return data
+    if data.count(old) == 1:
+        return data.replace(old, new, 1)
+
+    old_clean = strip_fences(old)
+    new_clean = strip_fences(new)
+    if data.count(old_clean) == 1:
+        return data.replace(old_clean, new_clean, 1)
+
+    data_norm = data.replace("\r\n", "\n")
+    old_norm = old_clean.replace("\r\n", "\n")
+    new_norm = new_clean.replace("\r\n", "\n")
+    if data_norm.count(old_norm) == 1:
+        replaced = data_norm.replace(old_norm, new_norm, 1)
+        return replaced if "\r\n" not in data else replaced.replace("\n", "\r\n")
+
+    old_lines = old_norm.splitlines()
+    data_lines = data_norm.splitlines()
+    if old_lines and len(data_lines) >= len(old_lines):
+        k = len(old_lines)
+        matches = []
+        for i in range(len(data_lines) - k + 1):
+            window = data_lines[i : i + k]
+            if all(w.strip() == o.strip() for w, o in zip(window, old_lines)):
+                deltas = [
+                    len(w) - len(w.lstrip()) - (len(o) - len(o.lstrip()))
+                    for w, o in zip(window, old_lines)
+                    if w.strip() and o.strip()
+                ]
+                if deltas and len(set(deltas)) == 1:
+                    matches.append((i, deltas[0]))
+
+        if len(matches) == 1:
+            idx, delta = matches[0]
+            new_lines = new_norm.splitlines()
+            adjusted_new = []
+            for n_line in new_lines:
+                if not n_line.strip():
+                    adjusted_new.append("")
+                elif delta > 0:
+                    adjusted_new.append(" " * delta + n_line)
+                elif delta < 0:
+                    to_remove = min(-delta, len(n_line) - len(n_line.lstrip()))
+                    adjusted_new.append(n_line[to_remove:])
+                else:
+                    adjusted_new.append(n_line)
+            res_lines = data_lines[:idx] + adjusted_new + data_lines[idx + k :]
+            result = "\n".join(res_lines)
+            if data_norm.endswith("\n"):
+                result += "\n"
+            return result if "\r\n" not in data else result.replace("\n", "\r\n")
+
+    return None
 
 
 def edit(root, edits, test_command=()):
@@ -108,13 +177,16 @@ def edit(root, edits, test_command=()):
         data = staged[path] if path in staged else path.read_text()
         original.setdefault(path, data)
         old, new = item["old"], item["new"]
-        if not isinstance(old, str) or not isinstance(new, str) or not old:
-            raise EditError("Edit requires nonempty old text and a string replacement", name)
+        if not isinstance(old, str) or not isinstance(new, str):
+            raise Stop("Each edit must contain old and new string fields")
+        if not old and data:
+            raise EditError("Edit requires nonempty old text for replacement unless the file is entirely empty", name)
         if old == new:
             continue
-        if data.count(old) != 1:
+        replaced = find_and_replace_tolerant(data, old, new)
+        if replaced is None:
             raise EditError("Edit requires exactly one matching old string; copy it from current source", name)
-        staged[path] = data.replace(old, new, 1)
+        staged[path] = replaced
         if len(staged[path].encode()) > 200000:
             raise Stop("Edited file too large")
     # Validate the whole batch before writing any file, preserving the last candidate.

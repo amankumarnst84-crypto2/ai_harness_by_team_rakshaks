@@ -14,6 +14,7 @@ from urllib.parse import urlparse
 import uuid
 
 from .engine import run
+from .analysis import DEFAULT_ISSUE
 from .fixtures import create_fixture
 from .safety import Stop, clean
 from .api_adapter import BASES, KEYS, call_api, configuration
@@ -106,11 +107,18 @@ class Store:
         if type(attempts) is not int or not 1 <= attempts <= 20:
             raise ValueError("Attempts must be 1-20")
         if mode == "model":
-            repo, test = data.get("repo"), data.get("test")
-            if not isinstance(repo, str) or not Path(repo).is_dir() or not issue.strip():
-                raise ValueError("A repository directory and issue are required")
-            if not isinstance(test, list) or not test or len(test) > 32 or not all(isinstance(x, str) and x for x in test):
-                raise ValueError("Test command must be a nonempty JSON string array")
+            from .intake import resolve_repo, resolve_issue
+            raw_repo = data.get("repo")
+            if not isinstance(raw_repo, str) or not raw_repo.strip():
+                raise ValueError("A repository directory or Git URL is required")
+            try:
+                repo = str(resolve_repo(raw_repo, self.directory))
+            except Exception as exc:
+                raise ValueError(f"Could not resolve repository '{raw_repo}': {exc}")
+            test = data.get("test")
+            if test is not None and (not isinstance(test, list) or not test or len(test) > 32 or not all(isinstance(x, str) and x for x in test)):
+                raise ValueError("Test command must be omitted or a nonempty JSON string array")
+            issue = resolve_issue(issue, raw_repo).strip() or DEFAULT_ISSUE
         with self.lock:
             if self.active:
                 raise ValueError("A run is already active. Stop it or wait for completion.")
@@ -140,7 +148,8 @@ class Store:
             args = argparse.Namespace(repo=repo, issue=issue, test=test, mock=mock, adapter=adapter,
                                       adapter_env=adapter_env, model_label=job["model"],
                                       output=str(directory / "result"), attempts=attempts, tokens=tokens,
-                                      seconds=300, command_seconds=120, max_output_tokens=1500, context_chars=10000,
+                                      seconds=300, command_seconds=120, max_output_tokens=3000, context_chars=min(120000, max(24000, tokens * 3)),
+                                      auto_check=not test, audit_gate=True,
                                       quiet=True, cancel=job["cancel"], on_event=on_event)
             try:
                 run(args)
@@ -173,7 +182,7 @@ class Store:
         lines = ["# HELP harness_runs_total Completed debugging runs by outcome and execution mode.",
                  "# TYPE harness_runs_total counter"]
         for mode in ("demo", "model"):
-            for status in ("verified_candidate", "tests_pass_candidate", "unverified_candidate", "incomplete", "cancelled", "error", "interrupted"):
+            for status in ("verified_candidate", "tests_pass_candidate", "static_candidate", "review_complete", "unverified_candidate", "incomplete", "cancelled", "error", "interrupted"):
                 lines.append('harness_runs_total{mode="%s",status="%s"} %d' % (mode, status, sum(j["mode"] == mode and j["status"] == status for j in jobs)))
         for metric, field in (("tokens_estimated", "estimated_tokens"), ("input_tokens_estimated", "input_tokens_estimate"),
                               ("output_tokens_estimated", "output_tokens_estimate"), ("provider_input_tokens", "provider_input_tokens"),

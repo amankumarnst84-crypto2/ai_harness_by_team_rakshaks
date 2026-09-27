@@ -14,8 +14,9 @@ make setup
 make run
 ```
 
-In Setup, enter a clean target Git repository and its trusted test command.
-Enter the issue in the text area above.
+In Setup, enter a clean target Git repository. The verification command and issue
+are optional: leave both blank for repository-only AI review with static checks.
+Supply a trusted test command and a specific issue for test-backed debugging.
 The sidebar tracks Baseline > Retrieve > Model > Modify > Verify > Review, with
 errors and token evidence. Code Diff shows automatic candidate modifications.
 Tests and Context expose the evidence. Apply asks for confirmation and refuses a
@@ -31,6 +32,35 @@ Ctrl+R runs; Ctrl+X or Ctrl+C cancels; Ctrl+P opens the patch; Ctrl+L focuses th
 issue; Ctrl+Q quits after cancellation/evidence preservation. History loads runs
 by ID. Launch never calls the provider. Missing AI_API_KEY is a visible error on
 live runs, not a fallback to another model.
+
+## Repository-Only Mode
+
+In the TUI, set Repository, clear the optional verification command, and click
+Run. A blank issue uses a default repository review request. The CLI also accepts
+an omitted --issue and --test. Runtime API credentials are still required for AI.
+
+The harness checks eligible Python syntax, JavaScript syntax via installed Node,
+and JSON validity without importing or executing project source. It does not
+automatically run npm scripts, install dependencies, or invent behavioral tests.
+Checks cover at most 200 indexed source files per scan; unsupported languages,
+missing runtimes, limits and excluded files are reported explicitly.
+
+Python AST imports and simple JavaScript local import/require statements build a
+bounded static dependency graph. Inferred test-import links are included, but
+this is not a runtime behavioral graph and does not fully resolve dynamic imports,
+aliases or external packages. Related paths inform retrieval; the AI can request
+additional files and propose multi-file patches within the existing edit limits.
+
+The Checks tab shows baseline/candidate diagnostics and before/after changed and
+affected files. Context shows inferred dependency edges. AI-only concerns are
+labeled as unverified findings. No-fix reviews finish as REVIEW COMPLETE rather
+than requiring a fabricated edit. No detected syntax change is not proof of
+unchanged behavior or correctness.
+
+STATIC CANDIDATE means eligible static checks passed, NOT that runtime tests
+passed. Applying it requires an explicit warning confirmation. Unsupported or
+incomplete checks yield an unverified candidate without enabling Apply. Existing
+test-command runs retain their separate test-backed result labels.
 
 ## Configuration
 
@@ -55,6 +85,35 @@ The default follows the current
 [JSON output](https://api-docs.deepseek.com/guides/json_mode/) documentation.
 V4 calls explicitly disable thinking so the output allowance is available for
 patch JSON. Temperature is 0; hosted output is not guaranteed deterministic.
+
+## Live Presentation
+
+Run `make present` after `make setup` (Node.js is also required for this optional
+JavaScript practice flow). Each invocation creates a new intentionally buggy
+49-line invoice.js and fourteen real regression tests under build/presentations, commits a
+clean local baseline, and opens the TUI with the repo, command and issue filled
+in. Existing projects are never reset. Source creation uses a deterministic
+template, not AI generation.
+
+For a real model run, export a fresh AI_API_KEY in the launching terminal, then
+click Run. This uses the configured provider/model and consumes API credits.
+If no key is exported, interactive `make run` and `make present` now ask for it
+using hidden terminal input before opening the TUI. The prompted key is held only
+in process memory, not written to files, Keychain or the parent shell environment.
+Pressing Enter without a key opens offline-only mode. Noninteractive evaluation
+still reads AI_API_KEY without prompting.
+Show the failing baseline in Tests, the proposed Code Diff, and the candidate
+test result. Apply is an explicit confirmation step. A live model result is not
+guaranteed; rehearse with the exact endpoint and model before presenting.
+
+Offline Demo is a separate, explicitly labeled fixed-response simulation with
+real edits/tests. It is a fallback pipeline demonstration, not evidence of live
+AI capability. A failed baseline is expected for a debugging task. After a
+passing candidate, historical failures remain in Tests rather than the current
+failures sidebar. New runs clear Activity; saved runs remain in History.
+
+To only create the files for inspection without launching:
+`.venv/bin/python tools/presentation.py --prepare-only`
 
 ## Token Controls
 

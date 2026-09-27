@@ -2,9 +2,12 @@
 import argparse
 import asyncio
 from dataclasses import replace
+import getpass
 import json
 import os
 import threading
+import sys
+import warnings
 from pathlib import Path
 
 from rich.syntax import Syntax
@@ -17,6 +20,7 @@ from textual.screen import ModalScreen
 from textual.widgets import Button, Footer, Input, Label, RichLog, Static, TabbedContent, TabPane, TextArea
 
 from .config import Settings
+from .analysis import DEFAULT_ISSUE
 from .safety import Stop, clean
 from .server import Store
 from .terminal import Terminal, argv as command_argv, terminal_text
@@ -31,9 +35,13 @@ class ConfirmApply(ModalScreen):
     ConfirmApply Horizontal { height: 3; margin-top: 1; }
     """
 
+    def __init__(self, static_only=False):
+        super().__init__()
+        self.static_only = static_only
+
     def compose(self):
         with Vertical():
-            yield Static("Apply this tested patch to the original repository?\nChanges stay uncommitted. The repository must still be clean.")
+            yield Static(("Only static checks passed. Runtime behavior is NOT verified. Apply anyway?" if self.static_only else "Apply this tested patch to the original repository?") + "\nChanges stay uncommitted. The repository must still be clean.")
             with Horizontal():
                 yield Button("Cancel", id="dismiss")
                 yield Button("Apply patch", id="confirm", variant="warning")
@@ -116,19 +124,19 @@ class RakshakTUI(App):
                 yield Static("Telemetry: saved reports\nGrafana: optional", id="telemetry", classes="muted")
             with Vertical(id="main"):
                 yield Label("Issue / follow-up requirement")
-                yield TextArea(id="issue")
+                yield TextArea(os.environ.get("HARNESS_ISSUE", ""), id="issue")
                 with Horizontal(id="actions"):
                     yield Button("Run", id="run", variant="success")
                     yield Button("Stop", id="stop", disabled=True)
-                    yield Button("Demo", id="demo")
+                    yield Button("Offline Demo", id="demo")
                     yield Button("Apply", id="apply", disabled=True, variant="warning")
                 yield Static("Ready", id="run-status", markup=False)
                 with TabbedContent(id="views"):
                     with TabPane("Activity", id="activity-tab"):
-                        yield RichLog(id="activity", min_width=1, wrap=True, markup=False, max_lines=2000)
+                        yield RichLog(id="activity", min_width=40, wrap=True, markup=False, max_lines=2000)
                     with TabPane("Code Diff", id="patch-tab"):
                         yield RichLog(id="patch", wrap=False, markup=False, max_lines=6000)
-                    with TabPane("Tests", id="tests-tab"):
+                    with TabPane("Checks", id="tests-tab"):
                         yield RichLog(id="tests", min_width=1, wrap=True, markup=False, max_lines=4000)
                     with TabPane("Context", id="context-tab"):
                         yield RichLog(id="context", min_width=1, wrap=True, markup=False, max_lines=2000)
@@ -139,8 +147,8 @@ class RakshakTUI(App):
                         with VerticalScroll(id="settings-scroll"):
                             yield Label("Repository")
                             yield Input(str(self.workspace_dir), id="repo")
-                            yield Label("Trusted verification command")
-                            yield Input(os.environ.get("HARNESS_TEST", ""), placeholder="python3 -m pytest -q", id="test")
+                            yield Label("Verification command (optional)")
+                            yield Input(os.environ.get("HARNESS_TEST", ""), placeholder="Automatic static checks", id="test")
                             yield Label("Exact prescribed model ID")
                             yield Input(self.settings.model, id="model")
                             yield Static(self.settings.provider + "\n" + self.settings.base, classes="muted", markup=False)
@@ -196,14 +204,14 @@ class RakshakTUI(App):
             return
         values = {name: self.query_one("#" + name, Input).value for name in ("repo", "test", "model", "budget", "attempts")}
         issue = self.query_one("#issue", TextArea).text.strip()
-        if not demo and not issue:
-            self.show_error("Enter a text issue before starting.")
-            return
+        if not issue:
+            issue = DEFAULT_ISSUE
         self.set_busy(True)
         self.cancel_requested.clear()
         self.selected, self.finished, self.seen, self.stage = None, None, 0, -1
         self.query_one("#pipeline", Static).update("\n".join("[ ] " + stage for stage in STAGES))
         self.query_one("#metrics", Static).update("Preparing run")
+        self.query_one("#activity", RichLog).clear()
         self.query_one("#errors", RichLog).clear()
         self.query_one("#patch", RichLog).clear()
         self.query_one("#tests", RichLog).clear()
@@ -216,12 +224,14 @@ class RakshakTUI(App):
         try:
             tokens, attempts = int(values["budget"]), int(values["attempts"])
             if not demo:
+                from .intake import resolve_issue
+                issue = resolve_issue(issue, values.get("repo", "")).strip() or DEFAULT_ISSUE
                 current = replace(self.settings, model=values["model"].strip())
                 current.connect(self.store)
                 selector = Terminal(self.store, writer=lambda _: None)
                 selector.choose_repo(values["repo"])
                 self.terminal.repo = selector.repo
-                test = command_argv(values["test"])
+                test = command_argv(values["test"]) if values["test"].strip() else None
             else:
                 test = None
             identity = self.store.start({"mode": "demo" if demo else "model", "repo": self.terminal.repo,
@@ -229,6 +239,7 @@ class RakshakTUI(App):
             self.call_from_thread(self.started, identity, issue, demo)
         except (ValueError, OSError, Stop) as exc:
             self.call_from_thread(self.set_busy, False)
+            self.call_from_thread(self.query_one("#metrics", Static).update, "Not started / 0 calls")
             self.call_from_thread(self.show_error, str(exc))
             if self.quitting:
                 self.call_from_thread(self.exit)
@@ -252,15 +263,26 @@ class RakshakTUI(App):
     def consume(self, event):
         kind = event["event"]
         stage = {"context": 1, "model_started": 2, "edited": 3, "read": 1}
-        if kind == "test_started":
+        if kind in {"test_started", "analysis_started"}:
             self.stage_update(0 if event["phase"] == "baseline" else 4)
         elif kind in stage:
             self.stage_update(stage[kind])
         self.terminal.event(event)
-        if kind in {"edit_rejected", "response_rejected", "stopped"}:
-            self.show_error(event["detail"])
+        if kind in {"edit_rejected", "response_rejected", "stopped", "audit_flagged"}:
+            self.show_error(event.get("detail", event.get("reason", "Behavioral regression flagged")))
         if kind == "edited":
             self.render_patch(self.store.detail(self.selected).get("patch", ""))
+        if kind == "analysis":
+            text = event["phase"].upper() + " / " + event["verification"] + "\n" + json.dumps(event["result"], indent=2)
+            if event.get("comparison"):
+                text += "\nBEFORE / AFTER\n" + json.dumps(event["comparison"], indent=2)
+            self.query_one("#tests", RichLog).write(Text(terminal_text(text)))
+            self.query_one("#context", RichLog).write(Text(terminal_text(json.dumps(event["result"].get("local_dependencies", []), indent=2))))
+            if event["result"]["diagnostics"]:
+                self.query_one("#errors", RichLog).write(Text(terminal_text(text[-4000:])))
+        if kind == "findings":
+            if event.get("findings"):
+                self.query_one("#errors", RichLog).write(Text(terminal_text("AI review findings:\n" + json.dumps(event["findings"], indent=2))))
         if kind == "test":
             result = event["result"]
             text = event["phase"].upper() + " / " + event["verification"] + "\n" + result.get("stderr", "") + result.get("stdout", "")
@@ -287,12 +309,21 @@ class RakshakTUI(App):
         self.set_busy(False)
         report = job.get("report") or {}
         success = job["status"] in {"verified_candidate", "tests_pass_candidate"}
+        static_candidate = job["status"] == "static_candidate"
+        if static_candidate or job["status"] == "review_complete":
+            self.stage_update(5, True)
+        if static_candidate:
+            self.query_one("#errors", RichLog).clear()
+            self.query_one("#errors", RichLog).write(Text("Static checks passed.\nRuntime behavior NOT verified."))
         if success:
             self.stage_update(5, True)
-        self.query_one("#run-status", Static).update(job["status"].upper().replace("_", " "))
+            self.query_one("#errors", RichLog).clear()
+            self.query_one("#errors", RichLog).write(Text("Current candidate tests passed.\nBaseline failures retained in Checks."))
+        label = job["status"].upper().replace("_", " ")
+        self.query_one("#run-status", Static).update(("OFFLINE SIMULATION / " if job["mode"] == "demo" else "") + label)
         self.terminal.summary(job)
         self.render_patch(job.get("patch", ""))
-        self.query_one("#apply", Button).disabled = not (success and job["mode"] != "demo" and bool(job.get("patch")))
+        self.query_one("#apply", Button).disabled = not ((success or static_candidate) and job["mode"] != "demo" and bool(job.get("patch")))
         provider_tokens = report.get("provider_input_tokens", 0) + report.get("provider_output_tokens", 0)
         budget_used = max(report.get("estimated_tokens", 0), provider_tokens)
         self.query_one("#metrics", Static).update(
@@ -364,7 +395,7 @@ class RakshakTUI(App):
             messages = []
             reviewer = Terminal(self.store, writer=messages.append)
             reviewer.selected = self.selected
-            await asyncio.to_thread(reviewer.apply)
+            await asyncio.to_thread(reviewer.apply, allow_static=True)
             for message in messages:
                 self.log_message(message)
             self.query_one("#run-status", Static).update("Patch applied. Original repository has uncommitted changes.")
@@ -386,7 +417,23 @@ class RakshakTUI(App):
         elif action == "apply" and not self.busy:
             self.action_patch()
             self.reviewing = True
-            self.push_screen(ConfirmApply(), self.apply_confirmed)
+            job = self.store.detail(self.selected) if self.selected else {}
+            self.push_screen(ConfirmApply(static_only=job.get("status") == "static_candidate"), self.apply_confirmed)
+
+
+def runtime_settings():
+    settings = Settings.from_env()
+    if settings.key or not sys.stdin.isatty():
+        return settings
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", getpass.GetPassWarning)
+            key = getpass.getpass("API key for this session (hidden; Enter = offline only): ").strip()
+    except EOFError:
+        key = ""
+    except getpass.GetPassWarning:
+        raise ValueError("Hidden input is unavailable. Export AI_API_KEY in the launching terminal.") from None
+    return replace(settings, key=key)
 
 
 def main(argv=None):
@@ -396,7 +443,7 @@ def main(argv=None):
     parser.add_argument("--data")
     args = parser.parse_args(argv)
     try:
-        settings = Settings.from_env()
+        settings = runtime_settings()
         if args.data:
             settings = replace(settings, data=Path(args.data).expanduser())
         if args.test:

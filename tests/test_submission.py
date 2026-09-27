@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import tempfile
 import threading
+import sys
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
@@ -17,12 +18,29 @@ from harness.fixtures import create_fixture
 from harness.retrieval import Index, MAX_FILE_BYTES
 from harness.safety import git
 from harness.server import Store
-from harness.tui import RakshakTUI, ConfirmApply
+from harness.tui import RakshakTUI, ConfirmApply, runtime_settings
 from textual.widgets import Button, Input, Static, TextArea, TabbedContent
 from tools.submission import check, package, source_files
 
 
 class SubmissionTests(unittest.TestCase):
+    def test_runtime_prompt_does_not_persist_key_in_environment(self):
+        with patch.dict(os.environ, {}, clear=True), patch("harness.tui.sys.stdin.isatty", return_value=True), patch("harness.tui.getpass.getpass", return_value="temporary-test-credential"):
+            settings = runtime_settings()
+            self.assertEqual(settings.key, "temporary-test-credential")
+            self.assertNotIn("AI_API_KEY", os.environ)
+            self.assertNotIn(settings.key, repr(settings))
+
+    def test_existing_runtime_key_skips_prompt(self):
+        with patch.dict(os.environ, {"AI_API_KEY": "existing-test-credential"}, clear=True), patch("harness.tui.getpass.getpass") as prompt:
+            self.assertEqual(runtime_settings().key, "existing-test-credential")
+            prompt.assert_not_called()
+
+    def test_noninteractive_launch_never_prompts(self):
+        with patch.dict(os.environ, {}, clear=True), patch("harness.tui.sys.stdin.isatty", return_value=False), patch("harness.tui.getpass.getpass") as prompt:
+            self.assertEqual(runtime_settings().key, "")
+            prompt.assert_not_called()
+
     def test_runtime_key_only_no_provider_fallback(self):
         settings = Settings.from_env({"AI_API_KEY": "runtime-only-sentinel",
                                       "DEEPSEEK_API_KEY": "must-not-win"})
@@ -148,6 +166,10 @@ class TUITests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("Budget", metrics)
             self.assertIn("Remaining", metrics)
             self.assertTrue(app.query_one("#errors").lines)
+            errors = "".join(line.text for line in app.query_one("#errors").lines)
+            self.assertNotIn("AssertionError", errors)
+            self.assertIn("passed", errors)
+            self.assertIn("OFFLINE SIMULATION", str(app.query_one("#run-status", Static).render()))
             await pilot.press("ctrl+p")
             await pilot.pause(.2)
             self.assertEqual(app.query_one("#views", TabbedContent).active, "patch-tab")
@@ -231,6 +253,43 @@ class TUITests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(app.query_one("#issue", TextArea).text, job["issue"])
             for name in ("activity", "errors", "tests", "context"):
                 self.assertNotIn("STALE_RUN_SENTINEL", "".join(line.text for line in app.query_one("#" + name).lines))
+
+    async def test_new_run_clears_previous_activity(self):
+        app = RakshakTUI(workspace=self.root, settings=self.settings)
+        async with app.run_test(size=(120, 40)) as pilot:
+            app.log_message("PREVIOUS_RUN_FAILURE")
+            app.begin(demo=True)
+            for _ in range(100):
+                await pilot.pause(.05)
+                if app.finished:
+                    break
+            self.assertIsNotNone(app.finished)
+            self.assertNotIn("PREVIOUS_RUN_FAILURE", "".join(line.text for line in app.query_one("#activity").lines))
+
+    async def test_repo_only_run_and_static_apply_warning(self):
+        fixture = create_fixture(self.root / "fixture")
+        adapter = self.root / "offline_adapter.py"
+        adapter.write_text("print(" + repr(Path(fixture["mock"]).read_text()) + ")\n")
+        store = Store(self.root / "auto-runs", adapter=[sys.executable, str(adapter)])
+        app = RakshakTUI(workspace=fixture["repo"], settings=self.settings, store=store)
+        async with app.run_test(size=(120, 40)) as pilot:
+            app.query_one("#test", Input).value = ""
+            app.query_one("#issue", TextArea).load_text("")
+            with patch.object(Settings, "connect", return_value=None):
+                app.begin()
+                for _ in range(150):
+                    await pilot.pause(.05)
+                    if app.finished:
+                        break
+            self.assertIsNotNone(app.finished)
+            job = store.detail(app.selected)
+            self.assertEqual(job["status"], "static_candidate")
+            self.assertIsNone(job["test"])
+            self.assertFalse(app.query_one("#apply", Button).disabled)
+            self.assertIn("NOT verified", "".join(line.text for line in app.query_one("#errors").lines))
+            await pilot.click("#apply")
+            self.assertTrue(app.screen.static_only)
+            await pilot.click("#dismiss")
 
 
 if __name__ == "__main__":
