@@ -63,7 +63,7 @@ Evaluates whether the agentic loop actually resolves the issue without introduci
 
 | Metric ID | Metric Name | Mathematical Definition / Formula | Industry Baseline | Tier | Rakshak Actual |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **M1.1** | **Resolve Rate ($RR$)** | $$RR = \frac{N_{\text{resolved}}}{N_{\text{total}}} \times 100$$ | 38%–49% [SWE-bench, 2024]<br>1.7% [SWE-bench Lite GPT-4, 2023] | **[T1]** | Pilot: 3/3 fixtures passed (N=3). See §4 for scale-up protocol. |
+| **M1.1** | **Resolve Rate ($RR$)** | $$RR = \frac{N_{\text{resolved}}}{N_{\text{total}}} \times 100$$ | 38%–49% [SWE-bench, 2024 (historical reference — see swebench.com)]<br>1.7% [SWE-bench Lite GPT-4, 2023] | **[T1]** | Pilot: 3/3 fixtures passed (N=3). See §4 for scale-up protocol. |
 | **M1.2** | **Fail-to-Pass Rate ($R_{F2P}$)** | $$R_{F2P} = \frac{\text{Tests failing in baseline that pass in candidate}}{\text{Total baseline failing tests}}$$ | SWE-bench Protocol [Jimenez et al., 2024] | **[T1]** | Pilot: 3/3 passed (N=3). |
 | **M1.3** | **Pass-to-Pass Preservation ($R_{P2P}$)** | $$R_{P2P} = \frac{\text{Existing passing tests still passing}}{\text{Total existing passing tests}}$$ | SWE-bench Protocol [Jimenez et al., 2024] | **[T1]** | Enforced locally (N=3). |
 | **M1.4** | **Pass@$k$ Metric** | $$\text{Pass}@k = \mathbb{E}\left[ 1 - \frac{\binom{n-c}{k}}{\binom{n}{k}} \right]$$ | Standard [Chen et al., 2021] | **[N/A]** | N/A — Single-sample trajectory harness. |
