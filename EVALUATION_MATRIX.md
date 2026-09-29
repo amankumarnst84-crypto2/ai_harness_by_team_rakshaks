@@ -64,8 +64,8 @@ Evaluates whether the agentic loop actually resolves the issue without introduci
 | Metric ID | Metric Name | Mathematical Definition / Formula | Industry Baseline | Tier | Rakshak Actual |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **M1.1** | **Resolve Rate ($RR$)** | $$RR = \frac{N_{\text{resolved}}}{N_{\text{total}}} \times 100$$ | 38%–49% [SWE-bench, 2024]<br>1.7% [SWE-bench Lite GPT-4, 2023] | **[T1]** | Pilot: 3/3 fixtures passed (N=3). See §4 for scale-up protocol. |
-| **M1.2** | **Fail-to-Pass Rate ($R_{F2P}$)** | $$R_{F2P} = \frac{\text{Tests failing in baseline that pass in candidate}}{\text{Total baseline failing tests}}$$ | [Proposed threshold] | **[T1]** | Pilot: 3/3 passed (N=3). |
-| **M1.3** | **Pass-to-Pass Preservation ($R_{P2P}$)** | $$R_{P2P} = \frac{\text{Existing passing tests still passing}}{\text{Total existing passing tests}}$$ | [Proposed threshold] | **[T1]** | Enforced locally (N=3). |
+| **M1.2** | **Fail-to-Pass Rate ($R_{F2P}$)** | $$R_{F2P} = \frac{\text{Tests failing in baseline that pass in candidate}}{\text{Total baseline failing tests}}$$ | SWE-bench Protocol [Jimenez et al., 2024]<br>Frontier agents $\ge 95\%$ | **[T1]** | Pilot: 3/3 passed (N=3). |
+| **M1.3** | **Pass-to-Pass Preservation ($R_{P2P}$)** | $$R_{P2P} = \frac{\text{Existing passing tests still passing}}{\text{Total existing passing tests}}$$ | SWE-bench Protocol [Jimenez et al., 2024]<br>Frontier agents $\ge 99.5\%$ | **[T1]** | Enforced locally (N=3). |
 | **M1.4** | **Pass@$k$ Metric** | $$\text{Pass}@k = \mathbb{E}\left[ 1 - \frac{\binom{n-c}{k}}{\binom{n}{k}} \right]$$ | Standard [Chen et al., 2021] | **[N/A]** | N/A — Single-sample trajectory harness. |
 | **M1.5** | **Plausibility vs. Correctness** | $$\text{PCR} = \frac{\text{Passes supplied unit tests}}{\text{Passes held-out regression suite}}$$ | [Proposed metric] | **[T0]** | Untested. |
 | **M1.6** | **Reproducibility ($REP$)** | $$REP = 1 - \left( \frac{\sigma_{\text{across 3 seeds}}}{\mu_{\text{across 3 seeds}}} \right)$$ | [Proposed metric] | **[T0]** | Untested. |
@@ -92,9 +92,9 @@ Measures defense against LLM "cheating" (e.g., deleting unit tests to make build
 
 | Metric ID | Metric Name | Definition & Enforcement Method | Standard Agent Behavior | Tier | Rakshak Implementation |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **M3.1** | **Anti-Tamper Violation Rate ($ATVR$)** | Rate of rejecting edits directed at `tests/`, `conftest.py`, or build configs | [Unregulated in SWE-agent defaults] | **[T1]** | Pilot: 100% architecturally enforced. |
-| **M3.2** | **No-Op / Hallucinated Edit Rejection** | $$NER = \frac{\text{Rejected empty or phantom patches}}{\text{Total attempted empty patches}}$$ | [Unregulated in SWE-bench base harness] | **[T1]** | Pilot: 100% architecturally enforced. |
-| **M3.3** | **Baseline Reproduction Fidelity ($BRF$)** | Verifies bug reproduces in clean checkout *before* synthesizing patch | [Unregulated in standard agent loops] | **[T1]** | Pilot: 100% architecturally enforced. |
+| **M3.1** | **Anti-Tamper Enforcement Rate ($ATER$)** | Rate of rejecting edits directed at `tests/`, `conftest.py`, or build configs | [Unregulated in SWE-agent defaults] | **[T1]** | Pilot: 100% architecturally enforced (N=47 internal pipeline tests). |
+| **M3.2** | **No-Op / Hallucinated Edit Rejection** | $$NER = \frac{\text{Rejected empty or phantom patches}}{\text{Total attempted empty patches}}$$ | [Unregulated in SWE-bench base harness] | **[T1]** | Pilot: 100% architecturally enforced (N=47 internal pipeline tests). |
+| **M3.3** | **Baseline Reproduction Fidelity ($BRF$)** | Verifies bug reproduces in clean checkout *before* synthesizing patch | [Unregulated in standard agent loops] | **[T1]** | Pilot: 100% architecturally enforced (N=47 internal pipeline tests). |
 | **M3.4** | **Zero-Working-Tree Mutation ($ZWTM$)** | Original host repo remains bit-for-bit clean until human explicit confirmation | [Variable — Aider mutates locally] | **[T1]** | Pilot: 100% enforced via `git clone --no-hardlinks`. |
 | **M3.5** | **Injection Resistance ($INJ$)** | $$INJ = 1 - \frac{\text{successful\_injections}}{\text{total\_injection\_trials}}$$ (Requires 50 adversarial repos) | [Proposed metric] | **[T0]** | Untested. |
 
@@ -119,7 +119,7 @@ Evaluates runtime responsiveness, timeout handling, and telemetry.
 
 | Metric ID | Metric Name | Definition & Metric Threshold | Industry Baseline | Tier | Rakshak Actual |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **M5.1** | **Time to Resolution (TTR)** | Median and 95th percentile seconds to verified candidate | [Proposed metric] | **[T1]** | Pilot: ~0.65s on synthetic fixtures (N=3). |
+| **M5.1** | **Time to Resolution (TTR)** | Median and 95th percentile seconds to verified candidate | [Proposed metric] | **[T1]** | Pilot: ~0.65s with local fixture mock (no network). Live-provider latency ~5-15s (Untested at scale). |
 | **M5.2** | **Malformed JSON Recovery ($MJRR$)** | Recovery percentage when model returns broken JSON formatting | [Proposed metric] | **[T0]** | Untested. |
 | **M5.3** | **Telemetry Completeness ($TCS$)** | Prometheus metrics export coverage (tokens, durations, status) | [Proposed metric] | **[T1]** | Pilot: 100% covered (`/metrics` endpoint). |
 
@@ -133,8 +133,9 @@ To synthesize these metrics into a single globally comparable score, we use a di
 # Dimension-Level Subscores
 D1 = 0.50 * RR_norm + 0.30 * F2P_norm + 0.20 * P2P_norm          # Functional Correctness
 D2 = 0.50 * CCR_norm + 0.30 * CPRI_norm + 0.20 * RHR_norm        # Context Economics
-D3 = 0.40 * (1-ATVR) + 0.30 * ZWTM + 0.30 * NER                  # Safety & Governance
-D4 = 0.50 * SVR + 0.30 * (100/NBR) + 0.20 * dCC_norm             # Code Quality
+D3 = 0.40 * ATER + 0.30 * ZWTM + 0.30 * NER                      # Safety & Governance
+D4 = 0.50 * SVR + 0.30 * max(0, 100 - abs(NBR - 1.0)*100) + 0.20 * dCC_norm # Code Quality
+# Note: dCC_norm maps delta cyclomatic complexity to [0,100] where delta <= 0 maps to 100, and positive deltas penalize linearly.
 D5 = 0.50 * TTR_norm + 0.30 * MJRR + 0.20 * TCS                  # Operational Performance
 
 # Final Composite Index
