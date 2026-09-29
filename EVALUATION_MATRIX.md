@@ -4,7 +4,7 @@ Adopts SWE-bench F2P/P2P standards, CodeXGLUE AST matching, and AgentBench safet
 
 > **Document Version:** 1.0.0  
 > **Target Framework:** Rakshak Autonomous AI Harness  
-> **Benchmark Standards Aligned:** SWE-bench (ICLR 2024), HumanEval (OpenAI), Defects4J (IEEE TSE), CodeXGLUE (Microsoft), and AgentBench.
+> **Benchmark Standards Aligned:** SWE-bench (ICLR 2024) and CodeXGLUE (Microsoft).
 
 ---
 
@@ -31,7 +31,7 @@ For **Rakshak**, which operates as a token-conscious, self-verifying repair harn
 
 ```
                        ┌──────────────────────────────────────────────┐
-                       │  GLOBAL AI HARNESS EVALUATION MATRIX (PERST) │
+                       │ COMPOSITE HARNESS EVALUATION MATRIX (PERST)  │
                        └──────────────────────┬───────────────────────┘
                                               │
     ┌──────────────────┬──────────────────────┼──────────────────────┬──────────────────┐
@@ -67,7 +67,7 @@ Evaluates whether the agentic loop actually resolves the issue without introduci
 | **M1.2** | **Fail-to-Pass Rate ($R_{F2P}$)** | $$R_{F2P} = \frac{\text{Tests failing in baseline that pass in candidate}}{\text{Total baseline failing tests}}$$ | SWE-bench Protocol [Jimenez et al., 2024]<br>Frontier agents $\ge 95\%$ | **[T1]** | Pilot: 3/3 passed (N=3). |
 | **M1.3** | **Pass-to-Pass Preservation ($R_{P2P}$)** | $$R_{P2P} = \frac{\text{Existing passing tests still passing}}{\text{Total existing passing tests}}$$ | SWE-bench Protocol [Jimenez et al., 2024]<br>Frontier agents $\ge 99.5\%$ | **[T1]** | Enforced locally (N=3). |
 | **M1.4** | **Pass@$k$ Metric** | $$\text{Pass}@k = \mathbb{E}\left[ 1 - \frac{\binom{n-c}{k}}{\binom{n}{k}} \right]$$ | Standard [Chen et al., 2021] | **[N/A]** | N/A — Single-sample trajectory harness. |
-| **M1.5** | **Plausibility vs. Correctness** | $$\text{PCR} = \frac{\text{Passes supplied unit tests}}{\text{Passes held-out regression suite}}$$ | [Proposed metric] | **[T0]** | Untested. |
+| **M1.5** | **Plausibility vs. Correctness** | $$\text{PCR} = \frac{\text{Passes explicitly supplied issue-reproduction tests}}{\text{Passes completely hidden/held-out regression suite}}$$ | [Proposed metric] | **[T0]** | Untested. |
 | **M1.6** | **Reproducibility ($REP$)** | $$REP = 1 - \left( \frac{\sigma_{\text{across 3 seeds}}}{\mu_{\text{across 3 seeds}}} \right)$$ | [Proposed metric] | **[T0]** | Untested. |
 | **M1.7** | **Model Ablation Delta ($MAD$)** | $$MAD = RR(\text{harness} + \text{model}) - RR(\text{model alone})$$ | [Proposed metric] | **[T0]** | Untested. |
 
@@ -80,7 +80,7 @@ Evaluates how smartly the harness navigates the codebase without drowning the LL
 | Metric ID | Metric Name | Mathematical Definition / Formula | Industry Baseline | Tier | Rakshak Actual |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **M2.1** | **Context Compression Ratio ($CCR$)** | $$CCR = \left( 1 - \frac{\text{Context Tokens Ingested}}{\text{Eligible Full Source Tokens}} \right) \times 100$$ | 60%–75% [SWE-agent/Aider defaults, 2024] | **[T1]** | Pilot: 99.3% on synthetic fixtures (N=3). |
-| **M2.2** | **Retrieval Hit Rate ($RHR@K$)** | $$\mathbb{I}(\text{Faulty Symbol / Line} \in \text{Top-}K \text{ Context})$$ | [Proposed baseline] | **[T1]** | Pilot: 100% on synthetic fixtures (N=3). |
+| **M2.2** | **Retrieval Hit Rate ($RHR@K$)** | $$\mathbb{I}(\text{Faulty Symbol / Line} \in \text{Top-}K \text{ Context})$$ | MTEB / BEIR Retrieval Baseline [2023] | **[T1]** | Pilot: 100% on synthetic fixtures (N=3). |
 | **M2.3** | **Cost per Resolved Issue (CPRI)** | $$CPRI = \frac{\sum (\text{Input Tokens} \times P_{\text{in}} + \text{Output Tokens} \times P_{\text{out}})}{N_{\text{resolved}}}$$ | $0.80–$3.50 [Aider, 2024] | **[T1]** | Pilot: ~$0.0X estimated (N=3) ⚠️ Unverified |
 | **M2.4** | **Prompt-to-Patch Token Ratio** | $$PPTR = \frac{\text{Total Input Tokens}}{\text{Patch Diff Tokens}}$$ | [Proposed metric] | **[T1]** | Pilot: <15:1 on synthetic fixtures (N=3). |
 
@@ -127,7 +127,7 @@ Evaluates runtime responsiveness, timeout handling, and telemetry.
 
 ## 3. The Unified "Rakshak Harness Index" (RHI)
 
-To synthesize these metrics into a single globally comparable score, we use a dimension-weighted composite function. This ensures that a model cannot simply game one metric (e.g., token efficiency) while failing completely on safety or quality.
+To synthesize these metrics into a single composite score, comparable across harnesses evaluated under this framework, we use a dimension-weighted composite function. This ensures that a model cannot simply game one metric (e.g., token efficiency) while failing completely on safety or quality.
 
 ```python
 # Dimension-Level Subscores
