@@ -60,3 +60,6 @@ def main():
         raise SystemExit(run(args))
     except (Stop, OSError) as exc:
         parser.exit(2, str(exc) + "\n")
+
+if __name__ == "__main__":
+    main()
