@@ -80,7 +80,7 @@ Evaluates how smartly the harness navigates the codebase without drowning the LL
 | Metric ID | Metric Name | Mathematical Definition / Formula | Industry Baseline | Tier | Rakshak Actual |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **M2.1** | **Context Compression Ratio ($CCR$)** | $$CCR = \left( 1 - \frac{\text{Context Tokens Ingested}}{\text{Eligible Full Source Tokens}} \right) \times 100$$ | 60%–75% [SWE-agent/Aider defaults, 2024] | **[T1]** | Pilot: 99.3% on synthetic fixtures (N=3). |
-| **M2.2** | **Retrieval Hit Rate ($RHR@K$)** | $$\mathbb{I}(\text{Faulty Symbol / Line} \in \text{Top-}K \text{ Context})$$ | MTEB / BEIR Retrieval Baseline [2023] | **[T1]** | Pilot: 100% on synthetic fixtures (N=3). |
+| **M2.2** | **Retrieval Hit Rate ($RHR@K$)** | $$\mathbb{I}(\text{Faulty Symbol / Line} \in \text{Top-}K \text{ Context})$$ | [Proposed metric] | **[T1]** | Pilot: 100% on synthetic fixtures (N=3). |
 | **M2.3** | **Cost per Resolved Issue (CPRI)** | $$CPRI = \frac{\sum (\text{Input Tokens} \times P_{\text{in}} + \text{Output Tokens} \times P_{\text{out}})}{N_{\text{resolved}}}$$ | $0.80–$3.50 [Aider, 2024] | **[T1]** | Pilot: ~$0.02 per fixture (N=3, DeepSeek pricing). |
 | **M2.4** | **Prompt-to-Patch Token Ratio** | $$PPTR = \frac{\text{Total Input Tokens}}{\text{Patch Diff Tokens}}$$ | [Proposed metric] | **[T1]** | Pilot: <15:1 on synthetic fixtures (N=3). |
 
