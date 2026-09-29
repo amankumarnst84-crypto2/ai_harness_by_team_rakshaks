@@ -129,7 +129,7 @@ RHI = 0.35 * D1 + 0.20 * D3 + 0.15 * D2 + 0.15 * D4 + 0.15 * D5
 ```
 
 ### Weight Sensitivity & Robustness
-Evaluators frequently criticize composite indexes for having arbitrary weights. To validate the RHI, we conduct a Monte Carlo sensitivity analysis varying all dimension weights by ±10%. The ordinal ranking of evaluated agents remains statistically stable (Spearman's rank correlation $r_s > 0.98$) across thousands of permutations. This mathematically guarantees that RHI reflects underlying capability, not arbitrary weight-tuning bias.
+Evaluators frequently criticize composite indexes for having arbitrary weights. **Weight sensitivity is currently untested.** We plan to conduct a Monte Carlo analysis (±10% weight perturbation, Spearman rank stability test) to mathematically guarantee that RHI reflects underlying capability, not arbitrary weight-tuning bias, once $\ge 3$ agents have been completely scored under RHI.
 
 ### Component Ablation Protocol (Isolating Harness Value)
 To definitively prove that the Rakshak harness adds independent engineering value (rather than just acting as a passthrough for a smart LLM), we define a strict ablation protocol:
@@ -147,64 +147,12 @@ To definitively prove that the Rakshak harness adds independent engineering valu
 
 ---
 
-## 4. The RHEM Evaluation Tracks & Current Microbenchmark
-
-### What it does NOT prove
-Honesty in evaluation is critical. The current `benchmark.py` **does not yet prove**:
-❌ LLM repair capability
-❌ Real-model success rate
-❌ SWE-bench performance
-❌ Real-world Resolve Rate
-❌ Prompt Injection resistance
-❌ Secret protection
-❌ False-Pass Rate across adversarial cases
-❌ Robustness against malformed model output
-❌ Cost per successful real repair
-❌ Generalization to complex repositories
-
-**Why?** Because the model response in the current microbenchmark is a predetermined, hardcoded fixture.
-
-### RHEM: The Four-Track Roadmap
-To achieve a full evaluation, the RHEM matrix is divided into four progressive tracks. We are currently at Track 0.
-
-```text
-RHEM
-│
-├── Track 0 — Synthetic Microbenchmark
-│   └── (Our current benchmark.py)
-│
-├── Track 1 — Real Model Repair
-│   └── 20–50 actual bugs evaluated against live LLM API calls
-│
-├── Track 2 — Security / Red Team
-│   └── Prompt injection, secrets extraction, path traversal attacks
-│
-└── Track 3 — Robustness
-    └── Malformed output recovery, timeout limits, bad patch loops
-```
-
-### Track 0: Current Microbenchmark Results
-
-| Metric | Result |
-| :--- | :--- |
-| **Cases** | 3 |
-| **Retrieval Success** | 3/3 (100%) |
-| **Pipeline Verification** | 3/3 (100%) |
-| **Original Integrity** | 3/3 (100%) |
-| **First-attempt Success** | 3/3 (100%) |
-| **Context Reduction** | 99.33% |
-| **Average Tokens** | ~908 |
-| **Average Runtime** | ~0.655 s |
-| **Real Model Used** | ❌ NO (Fixture) |
-
----
-
-## 5. How to Reproduce & Score Locally
+## 4. How to Reproduce & Score Locally
 
 Run the automated evaluation pipeline already built in Rakshak:
 
 ```bash
-# 1. Run Track 0 synthetic microbenchmark
+# 1. Run synthetic microbenchmark measuring Context Compression (M2.1) & Verification (M1.1)
 python3 benchmark.py --output evidence/microbenchmark.json
 
 # 2. Run multi-task evaluation against live or mock models
