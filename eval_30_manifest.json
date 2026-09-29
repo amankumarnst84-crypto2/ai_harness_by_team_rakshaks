@@ -1,0 +1,343 @@
+{
+  "models": [
+    {
+      "id": "deepseek-v4-test",
+      "provider": "deepseek",
+      "api_base": "https://api.deepseek.com/v1",
+      "model": "deepseek-v4-pro",
+      "api_key_env": "DEEPSEEK_API_KEY"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "bug_0",
+      "repo": "/Users/Apple/Desktop/rakshak/benchmark_30_bugs/repo_0",
+      "issue": "Fix the do_operation function in main.py so it correctly multiplies x by 2 instead of adding it.",
+      "test": [
+        "python3",
+        "-m",
+        "pytest",
+        "test_main.py"
+      ]
+    },
+    {
+      "id": "bug_1",
+      "repo": "/Users/Apple/Desktop/rakshak/benchmark_30_bugs/repo_1",
+      "issue": "Fix the do_operation function in main.py so it correctly multiplies x by 3 instead of adding it.",
+      "test": [
+        "python3",
+        "-m",
+        "pytest",
+        "test_main.py"
+      ]
+    },
+    {
+      "id": "bug_2",
+      "repo": "/Users/Apple/Desktop/rakshak/benchmark_30_bugs/repo_2",
+      "issue": "Fix the do_operation function in main.py so it correctly multiplies x by 4 instead of adding it.",
+      "test": [
+        "python3",
+        "-m",
+        "pytest",
+        "test_main.py"
+      ]
+    },
+    {
+      "id": "bug_3",
+      "repo": "/Users/Apple/Desktop/rakshak/benchmark_30_bugs/repo_3",
+      "issue": "Fix the do_operation function in main.py so it correctly multiplies x by 5 instead of adding it.",
+      "test": [
+        "python3",
+        "-m",
+        "pytest",
+        "test_main.py"
+      ]
+    },
+    {
+      "id": "bug_4",
+      "repo": "/Users/Apple/Desktop/rakshak/benchmark_30_bugs/repo_4",
+      "issue": "Fix the do_operation function in main.py so it correctly multiplies x by 6 instead of adding it.",
+      "test": [
+        "python3",
+        "-m",
+        "pytest",
+        "test_main.py"
+      ]
+    },
+    {
+      "id": "bug_5",
+      "repo": "/Users/Apple/Desktop/rakshak/benchmark_30_bugs/repo_5",
+      "issue": "Fix the do_operation function in main.py so it correctly multiplies x by 7 instead of adding it.",
+      "test": [
+        "python3",
+        "-m",
+        "pytest",
+        "test_main.py"
+      ]
+    },
+    {
+      "id": "bug_6",
+      "repo": "/Users/Apple/Desktop/rakshak/benchmark_30_bugs/repo_6",
+      "issue": "Fix the do_operation function in main.py so it correctly multiplies x by 8 instead of adding it.",
+      "test": [
+        "python3",
+        "-m",
+        "pytest",
+        "test_main.py"
+      ]
+    },
+    {
+      "id": "bug_7",
+      "repo": "/Users/Apple/Desktop/rakshak/benchmark_30_bugs/repo_7",
+      "issue": "Fix the do_operation function in main.py so it correctly multiplies x by 9 instead of adding it.",
+      "test": [
+        "python3",
+        "-m",
+        "pytest",
+        "test_main.py"
+      ]
+    },
+    {
+      "id": "bug_8",
+      "repo": "/Users/Apple/Desktop/rakshak/benchmark_30_bugs/repo_8",
+      "issue": "Fix the do_operation function in main.py so it correctly multiplies x by 10 instead of adding it.",
+      "test": [
+        "python3",
+        "-m",
+        "pytest",
+        "test_main.py"
+      ]
+    },
+    {
+      "id": "bug_9",
+      "repo": "/Users/Apple/Desktop/rakshak/benchmark_30_bugs/repo_9",
+      "issue": "Fix the do_operation function in main.py so it correctly multiplies x by 11 instead of adding it.",
+      "test": [
+        "python3",
+        "-m",
+        "pytest",
+        "test_main.py"
+      ]
+    },
+    {
+      "id": "bug_10",
+      "repo": "/Users/Apple/Desktop/rakshak/benchmark_30_bugs/repo_10",
+      "issue": "Fix the do_operation function in main.py so it correctly multiplies x by 12 instead of adding it.",
+      "test": [
+        "python3",
+        "-m",
+        "pytest",
+        "test_main.py"
+      ]
+    },
+    {
+      "id": "bug_11",
+      "repo": "/Users/Apple/Desktop/rakshak/benchmark_30_bugs/repo_11",
+      "issue": "Fix the do_operation function in main.py so it correctly multiplies x by 13 instead of adding it.",
+      "test": [
+        "python3",
+        "-m",
+        "pytest",
+        "test_main.py"
+      ]
+    },
+    {
+      "id": "bug_12",
+      "repo": "/Users/Apple/Desktop/rakshak/benchmark_30_bugs/repo_12",
+      "issue": "Fix the do_operation function in main.py so it correctly multiplies x by 14 instead of adding it.",
+      "test": [
+        "python3",
+        "-m",
+        "pytest",
+        "test_main.py"
+      ]
+    },
+    {
+      "id": "bug_13",
+      "repo": "/Users/Apple/Desktop/rakshak/benchmark_30_bugs/repo_13",
+      "issue": "Fix the do_operation function in main.py so it correctly multiplies x by 15 instead of adding it.",
+      "test": [
+        "python3",
+        "-m",
+        "pytest",
+        "test_main.py"
+      ]
+    },
+    {
+      "id": "bug_14",
+      "repo": "/Users/Apple/Desktop/rakshak/benchmark_30_bugs/repo_14",
+      "issue": "Fix the do_operation function in main.py so it correctly multiplies x by 16 instead of adding it.",
+      "test": [
+        "python3",
+        "-m",
+        "pytest",
+        "test_main.py"
+      ]
+    },
+    {
+      "id": "bug_15",
+      "repo": "/Users/Apple/Desktop/rakshak/benchmark_30_bugs/repo_15",
+      "issue": "Fix the do_operation function in main.py so it correctly multiplies x by 17 instead of adding it.",
+      "test": [
+        "python3",
+        "-m",
+        "pytest",
+        "test_main.py"
+      ]
+    },
+    {
+      "id": "bug_16",
+      "repo": "/Users/Apple/Desktop/rakshak/benchmark_30_bugs/repo_16",
+      "issue": "Fix the do_operation function in main.py so it correctly multiplies x by 18 instead of adding it.",
+      "test": [
+        "python3",
+        "-m",
+        "pytest",
+        "test_main.py"
+      ]
+    },
+    {
+      "id": "bug_17",
+      "repo": "/Users/Apple/Desktop/rakshak/benchmark_30_bugs/repo_17",
+      "issue": "Fix the do_operation function in main.py so it correctly multiplies x by 19 instead of adding it.",
+      "test": [
+        "python3",
+        "-m",
+        "pytest",
+        "test_main.py"
+      ]
+    },
+    {
+      "id": "bug_18",
+      "repo": "/Users/Apple/Desktop/rakshak/benchmark_30_bugs/repo_18",
+      "issue": "Fix the do_operation function in main.py so it correctly multiplies x by 20 instead of adding it.",
+      "test": [
+        "python3",
+        "-m",
+        "pytest",
+        "test_main.py"
+      ]
+    },
+    {
+      "id": "bug_19",
+      "repo": "/Users/Apple/Desktop/rakshak/benchmark_30_bugs/repo_19",
+      "issue": "Fix the do_operation function in main.py so it correctly multiplies x by 21 instead of adding it.",
+      "test": [
+        "python3",
+        "-m",
+        "pytest",
+        "test_main.py"
+      ]
+    },
+    {
+      "id": "bug_20",
+      "repo": "/Users/Apple/Desktop/rakshak/benchmark_30_bugs/repo_20",
+      "issue": "Fix the do_operation function in main.py so it correctly multiplies x by 22 instead of adding it.",
+      "test": [
+        "python3",
+        "-m",
+        "pytest",
+        "test_main.py"
+      ]
+    },
+    {
+      "id": "bug_21",
+      "repo": "/Users/Apple/Desktop/rakshak/benchmark_30_bugs/repo_21",
+      "issue": "Fix the do_operation function in main.py so it correctly multiplies x by 23 instead of adding it.",
+      "test": [
+        "python3",
+        "-m",
+        "pytest",
+        "test_main.py"
+      ]
+    },
+    {
+      "id": "bug_22",
+      "repo": "/Users/Apple/Desktop/rakshak/benchmark_30_bugs/repo_22",
+      "issue": "Fix the do_operation function in main.py so it correctly multiplies x by 24 instead of adding it.",
+      "test": [
+        "python3",
+        "-m",
+        "pytest",
+        "test_main.py"
+      ]
+    },
+    {
+      "id": "bug_23",
+      "repo": "/Users/Apple/Desktop/rakshak/benchmark_30_bugs/repo_23",
+      "issue": "Fix the do_operation function in main.py so it correctly multiplies x by 25 instead of adding it.",
+      "test": [
+        "python3",
+        "-m",
+        "pytest",
+        "test_main.py"
+      ]
+    },
+    {
+      "id": "bug_24",
+      "repo": "/Users/Apple/Desktop/rakshak/benchmark_30_bugs/repo_24",
+      "issue": "Fix the do_operation function in main.py so it correctly multiplies x by 26 instead of adding it.",
+      "test": [
+        "python3",
+        "-m",
+        "pytest",
+        "test_main.py"
+      ]
+    },
+    {
+      "id": "bug_25",
+      "repo": "/Users/Apple/Desktop/rakshak/benchmark_30_bugs/repo_25",
+      "issue": "Fix the do_operation function in main.py so it correctly multiplies x by 27 instead of adding it.",
+      "test": [
+        "python3",
+        "-m",
+        "pytest",
+        "test_main.py"
+      ]
+    },
+    {
+      "id": "bug_26",
+      "repo": "/Users/Apple/Desktop/rakshak/benchmark_30_bugs/repo_26",
+      "issue": "Fix the do_operation function in main.py so it correctly multiplies x by 28 instead of adding it.",
+      "test": [
+        "python3",
+        "-m",
+        "pytest",
+        "test_main.py"
+      ]
+    },
+    {
+      "id": "bug_27",
+      "repo": "/Users/Apple/Desktop/rakshak/benchmark_30_bugs/repo_27",
+      "issue": "Fix the do_operation function in main.py so it correctly multiplies x by 29 instead of adding it.",
+      "test": [
+        "python3",
+        "-m",
+        "pytest",
+        "test_main.py"
+      ]
+    },
+    {
+      "id": "bug_28",
+      "repo": "/Users/Apple/Desktop/rakshak/benchmark_30_bugs/repo_28",
+      "issue": "Fix the do_operation function in main.py so it correctly multiplies x by 30 instead of adding it.",
+      "test": [
+        "python3",
+        "-m",
+        "pytest",
+        "test_main.py"
+      ]
+    },
+    {
+      "id": "bug_29",
+      "repo": "/Users/Apple/Desktop/rakshak/benchmark_30_bugs/repo_29",
+      "issue": "Fix the do_operation function in main.py so it correctly multiplies x by 31 instead of adding it.",
+      "test": [
+        "python3",
+        "-m",
+        "pytest",
+        "test_main.py"
+      ]
+    }
+  ]
+}

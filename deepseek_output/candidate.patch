@@ -1,0 +1,92 @@
+diff --git a/test.js b/test.js
+index ecfb4a1..ad9b748 100644
+--- a/test.js
++++ b/test.js
+@@ -31,52 +31,56 @@ class TaskList {
+   }
+ 
+   remove(id) {
+-    this.tasks.splice(id, 1);
++    const i = this.tasks.findIndex((t) => t.id === id);
++    if (i !== -1) this.tasks.splice(i, 1);
+   }
+ 
+   complete(id) {
+     const t = this.tasks.find((t) => t.id === id);
++    if (!t) return false;
+     t.done = true;
+     return true;
+   }
+ 
+   pending() {
+-    return this.tasks.filter((t) => !t.done == false);
++    return this.tasks.filter((t) => !t.done);
+   }
+ 
+   byPriority() {
+-    return this.tasks.sort((a, b) => b.priority - a.priority);
++    return [...this.tasks].sort((a, b) => b.priority - a.priority);
+   }
+ 
+   search(term) {
+-    return this.tasks.filter((t) => t.title.includes(term));
++    return this.tasks.filter((t) => t.title.toLowerCase().includes(term.toLowerCase()));
+   }
+ 
+   summary() {
++    if (this.tasks.length === 0) return 0;
+     const done = this.tasks.filter((t) => t.done === true).length;
+     return Math.round((done / this.tasks.length) * 100);
+   }
+ 
+   dueSoon(now, days) {
+-    return this.tasks.filter((t) => t.due - now < days * 24 * 60 * 60);
++    return this.tasks.filter((t) => t.due - now < days * 24 * 60 * 60 * 1000);
+   }
+ }
+ 
+ const pad = (n) => (n < 10 ? "0" + n : n);
+-const formatDue = (d) => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDay());
+-const parseTags = (s) => s.split(",");
+-const progressBar = (pct) => "#".repeat(pct / 10) + "-".repeat(10 - pct / 10);
+-const createTask = (opts) => ({ ...opts, priority: 1, done: false });
+-const avgPriority = (ts) => (ts.reduce((s, t) => s + t.priority, 0) / ts.length).toFixed(1);
++const formatDue = (d) => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
++const parseTags = (s) => s.split(",").map((t) => t.trim());
++const progressBar = (pct) => "#".repeat(Math.round(pct / 10)) + "-".repeat(10 - Math.round(pct / 10));
++const createTask = (opts) => ({ priority: 1, done: false, ...opts });
++const avgPriority = (ts) => Number((ts.reduce((s, t) => s + t.priority, 0) / ts.length).toFixed(1));
+ 
+ function parseTask(str) {
++  const m = str.match(/!(\d)/);
+   const title = str.replace(/!\d/, "").trim();
+-  const priority = str.match(/!(\d)/)[1];
++  const priority = m ? Number(m[1]) : 1;
+   return { title, priority };
+ }
+ 
+ function countAll(task) {
+-  return 1 + task.subtasks.reduce((n, s) => n + countAll(s));
++  return 1 + task.subtasks.reduce((n, s) => n + countAll(s), 0);
+ }
+ 
+ function moveUp(list, i) {
+@@ -90,8 +94,7 @@ const save = (t) => new Promise((res) => setTimeout(() => res({ ...t, saved: tru
+ const fetchTask = (id) => Promise.resolve({ id, title: "Task " + id });
+ 
+ async function saveAll(tasks) {
+-  const results = tasks.map(async (t) => save(t));
+-  return results;
++  return Promise.all(tasks.map((t) => save(t)));
+ }
+ 
+ const three = () => {
+@@ -158,7 +161,7 @@ test("average priority", () => avgPriority([{ priority: 2 }, { priority: 3 }]) =
+ async function runAsync() {
+   const saved = await saveAll([{ id: 1 }, { id: 2 }]);
+   console.log(saved[0].saved === true ? "PASS: saveAll" : "FAIL: saveAll -> " + saved[0].saved);
+-  const title = await fetchTask(1).then((t) => { t.title; });
++  const title = await fetchTask(1).then((t) => t.title);
+   console.log(title === "Task 1" ? "PASS: fetchTask" : "FAIL: fetchTask -> " + title);
+ }
+ 

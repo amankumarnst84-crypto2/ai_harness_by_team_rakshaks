@@ -1,0 +1,39 @@
+{
+  "mode": "model_adapter",
+  "model": "deepseek-chat",
+  "provider": "deepseek",
+  "base_commit": "ecaef349f27ef7df5b8f167a0dd08b09f68cb045",
+  "status": "tests_pass_candidate",
+  "verification": "passed",
+  "attempts": 1,
+  "estimated_tokens": 4449,
+  "input_tokens_estimate": 3370,
+  "output_tokens_estimate": 1079,
+  "provider_input_tokens": 4466,
+  "provider_output_tokens": 1405,
+  "provider_cached_input_tokens": 0,
+  "provider_usage_calls": 1,
+  "context_full_tokens_estimate": 2888,
+  "context_selected_tokens_estimate": 2553,
+  "token_budget": 12000,
+  "model_calls": 1,
+  "test_command": [
+    "node",
+    "test.js"
+  ],
+  "changed": true,
+  "context_strategy": "ranked_line_excerpts",
+  "verification_method": "test_command",
+  "baseline_verification": "passed",
+  "behavioral_audit": {
+    "intentional": true,
+    "downstream": [],
+    "reason": "Direct leaf change; no downstream callers affected."
+  },
+  "elapsed_seconds": 5.365,
+  "budget_used_tokens": 5871,
+  "budget_remaining_tokens": 6129,
+  "context_tokens_avoided_estimate": 335,
+  "context_reduction_percent": 11.6,
+  "provider_usage_complete": true
+}
