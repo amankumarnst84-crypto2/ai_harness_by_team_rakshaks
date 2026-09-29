@@ -99,8 +99,9 @@ def complete(request, env):
                             {"role": "user", "content": json.dumps({k: v for k, v in request.items() if k != "instruction"})}],
                "response_format": {"type": "json_object"}}
     payload["temperature"] = 0
-    # Keep text-only non-thinking calls bounded; never silently substitute models.
-    if env["HARNESS_PROVIDER"] == "deepseek" and env["HARNESS_MODEL"].startswith(("deepseek-v4", "deepseek-flash")):
+    # Attempt to disable extended thinking for all models to prevent latency/cost blowup.
+    # If the endpoint rejects this (HTTP 400), the fail-safe retry logic below will strip it.
+    if env["HARNESS_PROVIDER"] == "deepseek":
         payload["thinking"] = {"type": "disabled"}
         payload["effort"] = {"level": "low"}
     cap_field = "max_completion_tokens" if env["HARNESS_PROVIDER"] == "groq" else "max_tokens"

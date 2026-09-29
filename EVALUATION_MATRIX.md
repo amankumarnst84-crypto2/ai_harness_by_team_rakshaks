@@ -149,6 +149,8 @@ The N=30 evaluation uses a single deterministic template generating 30 near-iden
 
 *Reported metrics on this dataset are harness-validity indicators, not capability scores. Real-bug evaluation is pending.*
 
+*Internal benchmark (N=30) was run on deepseek-v4-pro. Final evaluation will use the organizer-provided DeepSeek model. Internal results validate harness plumbing; they do not predict final-evaluation performance.*
+
 ---
 
 ## 3. The Unified "Rakshak Harness Index" (RHI)
