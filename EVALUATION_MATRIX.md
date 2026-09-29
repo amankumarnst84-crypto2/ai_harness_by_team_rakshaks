@@ -143,7 +143,7 @@ RHI = 0.35 * D1 + 0.20 * D3 + 0.15 * D2 + 0.15 * D4 + 0.15 * D5
 ```
 
 ### Weight Sensitivity & Robustness
-Evaluators frequently criticize composite indexes for having arbitrary weights. **Weight sensitivity is currently untested.** We plan to conduct a Monte Carlo analysis (±10% weight perturbation, Spearman rank stability test) to mathematically guarantee that RHI reflects underlying capability, not arbitrary weight-tuning bias, once $\ge 3$ agents have been completely scored under RHI.
+Evaluators frequently criticize composite indexes for having arbitrary weights. **Weight sensitivity is currently untested.** We plan to conduct a Monte Carlo analysis (±10% weight perturbation, Spearman rank stability test) to mathematically guarantee that RHI reflects underlying capability, not arbitrary weight-tuning bias, once RHI has been computed for $\ge 3$ model configurations (e.g., DeepSeek, GPT, Claude) on the same task set.
 
 ### Component Ablation Protocol (Isolating Harness Value)
 To definitively prove that the Rakshak harness adds independent engineering value (rather than just acting as a passthrough for a smart LLM), we define a strict ablation protocol:
