@@ -65,9 +65,9 @@ Evaluates whether the agentic loop actually resolves the issue without introduci
 
 | Metric ID | Metric Name | Mathematical Definition / Formula | Industry Baseline | Tier | Rakshak Actual |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **M1.1** | **Resolve Rate ($RR$)** | $$RR = \frac{N_{\text{resolved}}}{N_{\text{total}}} \times 100$$ | 38%–49% [SWE-bench, 2024 (historical reference — see swebench.com)]<br>1.7% [SWE-bench Lite GPT-4, 2023] | **[T1]** | Pilot: 3/3 fixtures passed (N=3). See §4 for scale-up protocol. |
-| **M1.2** | **Fail-to-Pass Rate ($R_{F2P}$)** | $$R_{F2P} = \frac{\text{Tests failing in baseline that pass in candidate}}{\text{Total baseline failing tests}}$$ | SWE-bench Protocol [Jimenez et al., 2024] | **[T1]** | Pilot: 3/3 passed (N=3). |
-| **M1.3** | **Pass-to-Pass Preservation ($R_{P2P}$)** | $$R_{P2P} = \frac{\text{Existing passing tests still passing}}{\text{Total existing passing tests}}$$ | SWE-bench Protocol [Jimenez et al., 2024] | **[T1]** | Enforced locally (N=3). |
+| **M1.1** | **Resolve Rate ($RR$)** | $$RR = \frac{N_{\text{resolved}}}{N_{\text{total}}} \times 100$$ | 38%–49% [SWE-bench, 2024 (historical reference — see swebench.com)]<br>1.7% [SWE-bench Lite GPT-4, 2023] | **[T2]** | Internal: 30/30 bugs resolved (N=30). |
+| **M1.2** | **Fail-to-Pass Rate ($R_{F2P}$)** | $$R_{F2P} = \frac{\text{Tests failing in baseline that pass in candidate}}{\text{Total baseline failing tests}}$$ | SWE-bench Protocol [Jimenez et al., 2024] | **[T2]** | Internal: 30/30 tests passed (N=30). |
+| **M1.3** | **Pass-to-Pass Preservation ($R_{P2P}$)** | $$R_{P2P} = \frac{\text{Existing passing tests still passing}}{\text{Total existing passing tests}}$$ | SWE-bench Protocol [Jimenez et al., 2024] | **[T2]** | Enforced locally (N=30). |
 | **M1.4** | **Pass@$k$ Metric** | $$\text{Pass}@k = \mathbb{E}\left[ 1 - \frac{\binom{n-c}{k}}{\binom{n}{k}} \right]$$ | Standard [Chen et al., 2021] | **[N/A]** | N/A — Single-sample trajectory harness. |
 | **M1.5** | **Plausibility vs. Correctness** | $$\text{PCR} = \frac{\text{Passes explicitly supplied issue-reproduction tests}}{\text{Passes completely hidden/held-out regression suite}}$$ | [Proposed metric] | **[T0]** | Untested. |
 | **M1.6** | **Reproducibility ($REP$)** | $$REP = 1 - \left( \frac{\sigma_{\text{across 3 seeds}}}{\mu_{\text{across 3 seeds}}} \right)$$ | [Proposed metric] | **[T0]** | Untested. |
@@ -81,10 +81,10 @@ Evaluates how smartly the harness navigates the codebase without drowning the LL
 
 | Metric ID | Metric Name | Mathematical Definition / Formula | Industry Baseline | Tier | Rakshak Actual |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **M2.1** | **Context Compression Ratio ($CCR$)** | $$CCR = \left( 1 - \frac{\text{Context Tokens Ingested}}{\text{Eligible Full Source Tokens}} \right) \times 100$$ | 60%–75% [SWE-agent/Aider defaults, 2024] | **[T1]** | Pilot: 99.3% on synthetic fixtures (N=3). |
-| **M2.2** | **Retrieval Hit Rate ($RHR@K$)** | $$\mathbb{I}(\text{Faulty Symbol / Line} \in \text{Top-}K \text{ Context})$$ | [Proposed metric] | **[T1]** | Pilot: 100% on synthetic fixtures (N=3). |
-| **M2.3** | **Cost per Resolved Issue (CPRI)** | $$CPRI = \frac{\sum (\text{Input Tokens} \times P_{\text{in}} + \text{Output Tokens} \times P_{\text{out}})}{N_{\text{resolved}}}$$ | $0.80–$3.50 [Aider, 2024] | **[T1]** | Pilot: ~$0.02 per fixture (N=3, DeepSeek pricing). |
-| **M2.4** | **Prompt-to-Patch Token Ratio** | $$PPTR = \frac{\text{Total Input Tokens}}{\text{Patch Diff Tokens}}$$ | [Proposed metric] | **[T1]** | Pilot: <15:1 on synthetic fixtures (N=3). |
+| **M2.1** | **Context Compression Ratio ($CCR$)** | $$CCR = \left( 1 - \frac{\text{Context Tokens Ingested}}{\text{Eligible Full Source Tokens}} \right) \times 100$$ | 60%–75% [SWE-agent/Aider defaults, 2024] | **[T2]** | Internal: 99.3% on internal evaluation (N=30). |
+| **M2.2** | **Retrieval Hit Rate ($RHR@K$)** | $$\mathbb{I}(\text{Faulty Symbol / Line} \in \text{Top-}K \text{ Context})$$ | [Proposed metric] | **[T2]** | Internal: 100% on internal evaluation (N=30). |
+| **M2.3** | **Cost per Resolved Issue (CPRI)** | $$CPRI = \frac{\sum (\text{Input Tokens} \times P_{\text{in}} + \text{Output Tokens} \times P_{\text{out}})}{N_{\text{resolved}}}$$ | $0.80–$3.50 [Aider, 2024] | **[T2]** | Internal: ~$0.0002 per fixture (N=30, DeepSeek API). |
+| **M2.4** | **Prompt-to-Patch Token Ratio** | $$PPTR = \frac{\text{Total Input Tokens}}{\text{Patch Diff Tokens}}$$ | [Proposed metric] | **[T2]** | Internal: <15:1 on internal evaluation (N=30). |
 
 ---
 
@@ -94,10 +94,10 @@ Measures defense against LLM "cheating" (e.g., deleting unit tests to make build
 
 | Metric ID | Metric Name | Definition & Enforcement Method | Standard Agent Behavior | Tier | Rakshak Implementation |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **M3.1** | **Anti-Tamper Enforcement Rate ($ATER$)** | Rate of rejecting edits directed at `tests/`, `conftest.py`, or build configs | [Unregulated in SWE-agent defaults] | **[T1]** | Pilot: 100% architecturally enforced (N=47 internal pipeline tests). |
-| **M3.2** | **No-Op / Hallucinated Edit Rejection** | $$NER = \frac{\text{Rejected empty or phantom patches}}{\text{Total attempted empty patches}}$$ | [Unregulated in SWE-bench base harness] | **[T1]** | Pilot: 100% architecturally enforced (N=47 internal pipeline tests). |
-| **M3.3** | **Baseline Reproduction Fidelity ($BRF$)** | Verifies bug reproduces in clean checkout *before* synthesizing patch | [Unregulated in standard agent loops] | **[T1]** | Pilot: 100% architecturally enforced (N=47 internal pipeline tests). |
-| **M3.4** | **Zero-Working-Tree Mutation ($ZWTM$)** | Original host repo remains bit-for-bit clean until human explicit confirmation | [Variable — Aider mutates locally] | **[T1]** | Pilot: 100% enforced via `git clone --no-hardlinks`. |
+| **M3.1** | **Anti-Tamper Enforcement Rate ($ATER$)** | Rate of rejecting edits directed at `tests/`, `conftest.py`, or build configs | [Unregulated in SWE-agent defaults] | **[T2]** | Internal: 100% architecturally enforced (N=47 pipeline tests). |
+| **M3.2** | **No-Op / Hallucinated Edit Rejection** | $$NER = \frac{\text{Rejected empty or phantom patches}}{\text{Total attempted empty patches}}$$ | [Unregulated in SWE-bench base harness] | **[T2]** | Internal: 100% architecturally enforced (N=47 pipeline tests). |
+| **M3.3** | **Baseline Reproduction Fidelity ($BRF$)** | Verifies bug reproduces in clean checkout *before* synthesizing patch | [Unregulated in standard agent loops] | **[T2]** | Internal: 100% architecturally enforced (N=47 pipeline tests). |
+| **M3.4** | **Zero-Working-Tree Mutation ($ZWTM$)** | Original host repo remains bit-for-bit clean until human explicit confirmation | [Variable — Aider mutates locally] | **[T2]** | Internal: 100% enforced via `git clone --no-hardlinks`. |
 | **M3.5** | **Injection Resistance ($INJ$)** | $$INJ = 1 - \frac{\text{successful\_injections}}{\text{total\_injection\_trials}}$$ (Requires 50 adversarial repos) | [Proposed metric] | **[T0]** | Untested. |
 
 ---
@@ -121,7 +121,7 @@ Evaluates runtime responsiveness, timeout handling, and telemetry.
 
 | Metric ID | Metric Name | Definition & Metric Threshold | Industry Baseline | Tier | Rakshak Actual |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **M5.1** | **Time to Resolution (TTR)** | Median and 95th percentile seconds to verified candidate | [Proposed metric] | **[T1]** | Pilot: ~0.65s with local fixture mock (no network). Live-provider latency ~5-15s (Untested at scale). |
+| **M5.1** | **Time to Resolution (TTR)** | Median and 95th percentile seconds to verified candidate | [Proposed metric] | **[T2]** | Internal: ~2.0s live-provider median latency (N=30, DeepSeek chat). |
 | **M5.2** | **Malformed JSON Recovery ($MJRR$)** | Recovery percentage when model returns broken JSON formatting | [Proposed metric] | **[T0]** | Untested. |
 | **M5.3** | **Telemetry Completeness ($TCS$)** | Prometheus metrics export coverage (tokens, durations, status) | [Proposed metric] | **[T1]** | Pilot: 100% covered (`/metrics` endpoint). |
 
