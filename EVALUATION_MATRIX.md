@@ -204,3 +204,16 @@ python3 evaluate.py --manifest evaluation.example.json --output build/eval_summa
 # 3. Inspect Prometheus runtime telemetry
 curl http://localhost:9108/metrics
 ```
+
+---
+
+## 5. Final Evaluation Alignment
+
+Final evaluation will use the organizer-provided DeepSeek model, applying identical conditions across all teams. The RAKSHAK harness is designed to be model-agnostic within the DeepSeek family:
+
+- **Adapter supports `deepseek-chat`, `deepseek-v4-pro`, `deepseek-flash`, and `deepseek-reasoner`**
+- **Thinking/reasoning parameter is explicitly controlled per model capabilities** (graceful fallback on endpoints rejecting inference parameters).
+- **No silent provider fallback; errors surface visibly**
+- **Token budget, latency, and cost are tracked regardless of model**
+
+The critical evaluation metric under these conditions is MAD (Model Ablation Delta, **M1.7**): the improvement in resolve rate attributable to the harness versus raw model prompting.
