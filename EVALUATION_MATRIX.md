@@ -128,6 +128,29 @@ Evaluates runtime responsiveness, timeout handling, and telemetry.
 
 ---
 
+### 2.5 Scope and Limitations of the N=30 Evaluation
+The N=30 evaluation uses a single deterministic template generating 30 near-identical tasks. Each task contains:
+- One 3-line Python file with a comment stating the required operation (e.g., `# multiply x by 5`)
+- One assertion-based test
+- An issue description that names the required fix verbatim
+
+**This evaluation measures:**
+- End-to-end pipeline functionality (clone → retrieve → patch → test → report)
+- Live LLM API integration and per-task cost/latency
+- Safety gate enforcement (protected files, sandbox integrity)
+
+**This evaluation does not measure:**
+- Code localization in multi-file repositories
+- Retrieval quality on realistic codebases
+- Repair capability on non-trivial bugs
+- Robustness to underspecified issues
+- Reproducibility across seeds
+- Blast radius (ground-truth fix is one line)
+
+*Reported metrics on this dataset are harness-validity indicators, not capability scores. Real-bug evaluation is pending.*
+
+---
+
 ## 3. The Unified "Rakshak Harness Index" (RHI)
 
 To synthesize these metrics into a single composite score, comparable across harnesses evaluated under this framework, we use a dimension-weighted composite function. This ensures that a model cannot simply game one metric (e.g., token efficiency) while failing completely on safety or quality.
