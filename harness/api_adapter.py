@@ -102,6 +102,7 @@ def complete(request, env):
     # Keep text-only non-thinking calls bounded; never silently substitute models.
     if env["HARNESS_PROVIDER"] == "deepseek" and env["HARNESS_MODEL"].startswith(("deepseek-v4", "deepseek-flash")):
         payload["thinking"] = {"type": "disabled"}
+        payload["effort"] = {"level": "low"}
     cap_field = "max_completion_tokens" if env["HARNESS_PROVIDER"] == "groq" else "max_tokens"
     payload[cap_field] = min(2048, int(request.get("max_output_tokens", 1500)))
     try:

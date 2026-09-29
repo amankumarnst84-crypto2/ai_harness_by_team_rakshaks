@@ -83,7 +83,7 @@ Evaluates how smartly the harness navigates the codebase without drowning the LL
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **M2.1** | **Context Compression Ratio ($CCR$)** | $$CCR = \left( 1 - \frac{\text{Context Tokens Ingested}}{\text{Eligible Full Source Tokens}} \right) \times 100$$ | 60%–75% [SWE-agent/Aider defaults, 2024] | **[T2]** | Internal: 99.3% on internal evaluation (N=30). |
 | **M2.2** | **Retrieval Hit Rate ($RHR@K$)** | $$\mathbb{I}(\text{Faulty Symbol / Line} \in \text{Top-}K \text{ Context})$$ | [Proposed metric] | **[T2]** | Internal: 100% on internal evaluation (N=30). |
-| **M2.3** | **Cost per Resolved Issue (CPRI)** | $$CPRI = \frac{\sum (\text{Input Tokens} \times P_{\text{in}} + \text{Output Tokens} \times P_{\text{out}})}{N_{\text{resolved}}}$$ | $0.80–$3.50 [Aider, 2024] | **[T2]** | Internal: ~$0.0002 per fixture (N=30, DeepSeek API). |
+| **M2.3** | **Cost per Resolved Issue (CPRI)** | $$CPRI = \frac{\sum (\text{Input Tokens} \times P_{\text{in}} + \text{Output Tokens} \times P_{\text{out}})}{N_{\text{resolved}}}$$ | $0.80–$3.50 [Aider, 2024] | **[T2]** | Internal: ~$0.0002 per fixture (N=30, based on V3 pricing as of Sep 2026). |
 | **M2.4** | **Prompt-to-Patch Token Ratio** | $$PPTR = \frac{\text{Total Input Tokens}}{\text{Patch Diff Tokens}}$$ | [Proposed metric] | **[T2]** | Internal: <15:1 on internal evaluation (N=30). |
 
 ---
@@ -124,6 +124,8 @@ Evaluates runtime responsiveness, timeout handling, and telemetry.
 | **M5.1** | **Time to Resolution (TTR)** | Median and 95th percentile seconds to verified candidate | [Proposed metric] | **[T2]** | Internal: ~2.0s live-provider median latency (N=30, DeepSeek chat). |
 | **M5.2** | **Malformed JSON Recovery ($MJRR$)** | Recovery percentage when model returns broken JSON formatting | [Proposed metric] | **[T0]** | Untested. |
 | **M5.3** | **Telemetry Completeness ($TCS$)** | Prometheus metrics export coverage (tokens, durations, status) | [Proposed metric] | **[T1]** | Pilot: 100% covered (`/metrics` endpoint). |
+
+*Note on Model Alignment: Reported Rakshak Actual results use `deepseek-chat` (V3). The `deepseek-v4-pro` path is implemented and provider-verified but not exercised in this N=30 benchmark. Cross-model comparison is planned.*
 
 ---
 
