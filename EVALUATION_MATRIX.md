@@ -25,6 +25,8 @@ For **Rakshak**, which operates as a token-conscious, self-verifying repair harn
 4. **Code Quality & Blast Radius** (Semantic precision)
 5. **Operational Resilience & Speed** (Execution & error recovery)
 
+*This framework is original to Rakshak. It adopts recognized standards (SWE-bench, CodeXGLUE) where applicable and proposes new metrics where existing ones don't cover agentic repair workflows. External adoption is not claimed.*
+
 ---
 
 ## 2. The 5-Dimensional Evaluation Matrix (P.E.R.S.T Framework)
